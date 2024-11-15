@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -71,8 +72,10 @@ fun MainGame (navController: NavController) {
         }
     }
 
-    val imagePosition = remember { mutableStateOf(Offset(100f, 100f)) }
+    val imagePosition = remember { mutableStateOf(Offset(0f, 0f)) }
     val isVectorSelected = remember { mutableStateOf(false) }
+    val touchOffset = remember { mutableStateOf(Offset.Zero) }
+    val imageSize = remember { mutableStateOf(Offset.Zero) }
     Scaffold  { innerPadding ->
         Box(modifier = Modifier
             .padding(innerPadding)
@@ -114,7 +117,7 @@ fun MainGame (navController: NavController) {
                         onTap = {
                             tapOffset ->
                             if (isVectorSelected.value) {
-                                imagePosition.value = tapOffset
+                                imagePosition.value = tapOffset - touchOffset.value
                                 isVectorSelected.value = false
                             }
                         }
@@ -154,7 +157,8 @@ fun MainGame (navController: NavController) {
 
                 }
                 DisplaySvg(context, "test1",
-                    offset = imagePosition , isVectorSelected = isVectorSelected)
+                    offset = imagePosition , isVectorSelected = isVectorSelected,
+                    touchOffset = touchOffset, imageSize = imageSize)
             }
 
         }
@@ -164,7 +168,8 @@ fun MainGame (navController: NavController) {
 
 @Composable
 fun DisplaySvg(context: Context, shipType : String,
-               offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>) {
+               offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
+               touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>) {
 
     val imageLoader = ImageLoader.Builder(context)
 
@@ -184,12 +189,24 @@ fun DisplaySvg(context: Context, shipType : String,
                 .height(150.dp)
                 .offset{
                     IntOffset(
-                        x = offset.value.x.roundToInt(), y = offset.value.y.roundToInt()
+                        x = offset.value.x.roundToInt(),
+                        y = offset.value.y.roundToInt()
                     )
+                }
+                .onGloballyPositioned { layoutCoordinates ->
+                    imageSize.value = Offset (
+                        x = layoutCoordinates.size.width.toFloat(),
+                        y = layoutCoordinates.size.height.toFloat()
+                    )
+
                 }
                 .pointerInput(Unit) {
                     detectTapGestures (
-                        onTap = {
+                        onTap = { tapOffset ->
+                            touchOffset.value = Offset (
+                                x = tapOffset.x ,
+                                y = tapOffset.y
+                            )
                             isVectorSelected.value = true
 
                         }
