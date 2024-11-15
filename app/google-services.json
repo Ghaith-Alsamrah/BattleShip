@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "996993224000",
+    "project_id": "battleship-65017",
+    "storage_bucket": "battleship-65017.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996993224000:android:22714e63fabe19928f3ea5",
+        "android_client_info": {
+          "package_name": "com.example.buttleships"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbyTVjxvxjrO_UkeQnAAb0MpD4NyeiwKU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
