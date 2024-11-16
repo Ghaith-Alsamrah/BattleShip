@@ -131,7 +131,9 @@ fun MainGame (navController: NavController) {
                                 //This code might need refactoring if we are dealing with many ships instead!!!
                                 //Todo --> Make the ship rotatable and re-rendering the image
                                 imagePosition.value = tapOffset - touchOffset.value
-                                calculatePosition(imagePosition,currentDensity2)
+                                calculatePosition(imagePosition,currentDensity2,
+                                    imageRotation = mutableStateOf(imageRotation)
+                                )
                                 isVectorSelected.value = false
                             }
                         }
@@ -172,13 +174,17 @@ fun MainGame (navController: NavController) {
                 DisplaySvg(context, "test1",
                     offset = imagePosition , isVectorSelected = isVectorSelected,
                     touchOffset = touchOffset, imageSize = imageSize,
-                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation)
+                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation, )
+                if (isVectorSelected.value){
+                    Button(modifier = Modifier
+                        .align(Alignment.BottomEnd),
+                        onClick = {
+                            imageRotation += 90
+                        }
+                    ) { Text    (text = "Rotate")
+                    }
+                }
 
-                Button(modifier = Modifier
-                    .align(Alignment.BottomEnd),
-                onClick = {
-                    imageRotation += 90
-                }) { Text(text = "Rotate") }
             }
 
         }
@@ -192,7 +198,7 @@ fun MainGame (navController: NavController) {
 fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
                touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
-                ,imageRotation : MutableState <Float>, rotationAnimation : Float ) {
+                ,imageRotation : MutableState <Float>, rotationAnimation : Float, ) {
 
     val imageLoader = ImageLoader.Builder(context)
 
@@ -245,7 +251,8 @@ fun DisplaySvg(context: Context, shipType : String,
 }
 
 //align ship in cells After conversion from density point to normal pixels
-fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
+fun calculatePosition (offset : MutableState <Offset>, spacings : Float,
+                       imageRotation: MutableState<Float> ) {
     //Todo --> The padding logic might need to change depending on the ship!
     val spacingX = spacings.roundToInt()
     var offsetX = offset.value.x.roundToInt()
@@ -256,10 +263,14 @@ fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
     if (offsetY > (spacingX * 8)){
         offsetY = (spacingX * 7)
     }
+
     offsetX = offsetX / spacingX
     offsetY = offsetY / spacingX
     offsetX = offsetX * spacingX + (spacingX/15)
     offsetY = offsetY * spacingX
+    if ((imageRotation.value % 180 ) > 0){
+        offsetY -= spacingX  - (spacingX /2 )
+    }
     offset.value = Offset (
         x = offsetX.toFloat(), y = offsetY.toFloat()
     )
