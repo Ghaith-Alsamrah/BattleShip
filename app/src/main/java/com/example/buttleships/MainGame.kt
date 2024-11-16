@@ -1,7 +1,9 @@
 package com.example.buttleships
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -54,6 +58,7 @@ import kotlin.math.roundToInt
 
 //On second tap, place boat from the center of the boat to the right squars
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun MainGame (navController: NavController) {
     val context = LocalContext.current
@@ -71,6 +76,8 @@ fun MainGame (navController: NavController) {
         }
     }
 
+    var imageRotation by remember { mutableStateOf(0f) }
+    val rotationAnimation by animateFloatAsState( targetValue = imageRotation)
     val imagePosition = remember { mutableStateOf(Offset(0f, 0f)) } //starting position of the ship
     val isVectorSelected = remember { mutableStateOf(false) } //check if the ship is selected
     val touchOffset = remember { mutableStateOf(Offset.Zero) } //The ship placement from the center of the tap instead
@@ -118,6 +125,7 @@ fun MainGame (navController: NavController) {
                         onTap = {
                             tapOffset ->
                             if (isVectorSelected.value) {
+
                                 //Checks if the ship is taped, if it is place it in the middle of where the other tap is
 
                                 //This code might need refactoring if we are dealing with many ships instead!!!
@@ -163,7 +171,14 @@ fun MainGame (navController: NavController) {
                 //Rendering the first ship
                 DisplaySvg(context, "test1",
                     offset = imagePosition , isVectorSelected = isVectorSelected,
-                    touchOffset = touchOffset, imageSize = imageSize)
+                    touchOffset = touchOffset, imageSize = imageSize,
+                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation)
+
+                Button(modifier = Modifier
+                    .align(Alignment.BottomEnd),
+                onClick = {
+                    imageRotation += 90
+                }) { Text(text = "Rotate") }
             }
 
         }
@@ -176,7 +191,8 @@ fun MainGame (navController: NavController) {
 @Composable
 fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
-               touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>) {
+               touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
+                ,imageRotation : MutableState <Float>, rotationAnimation : Float ) {
 
     val imageLoader = ImageLoader.Builder(context)
 
@@ -194,7 +210,8 @@ fun DisplaySvg(context: Context, shipType : String,
             modifier = Modifier
                 //Todo --> Creating padding to be placed better
                 .width(70.dp)
-                .height(135.dp)
+                .height(180.dp)
+                .padding(20.dp)
                 .offset{
                     IntOffset(
                         x = offset.value.x.roundToInt(),
@@ -223,20 +240,16 @@ fun DisplaySvg(context: Context, shipType : String,
                     )
 
                 }
+                .graphicsLayer { rotationZ =  rotationAnimation}
         )
 }
 
 //align ship in cells After conversion from density point to normal pixels
 fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
+    //Todo --> The padding logic might need to change depending on the ship!
     val spacingX = spacings.roundToInt()
     var offsetX = offset.value.x.roundToInt()
     var offsetY = offset.value.y.roundToInt()
-    if ((offsetX % spacingX)> (spacingX/2)) {
-        offsetX = offsetX + spacingX
-        }
-    if ((offsetY % spacingX)>(spacingX/2)) {
-        offsetY = offsetY + spacingX
-    }
     if (offsetX > (spacingX * 10)){
         offsetX = (spacingX * 9)
     }
@@ -245,7 +258,7 @@ fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
     }
     offsetX = offsetX / spacingX
     offsetY = offsetY / spacingX
-    offsetX = offsetX * spacingX
+    offsetX = offsetX * spacingX + (spacingX/15)
     offsetY = offsetY * spacingX
     offset.value = Offset (
         x = offsetX.toFloat(), y = offsetY.toFloat()
