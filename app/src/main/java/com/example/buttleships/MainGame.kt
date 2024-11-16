@@ -34,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -55,7 +56,7 @@ data class ship (
     var sizeY : Int
     )
 
-
+//On second tap, place boat from the center of the boat to the right squars
 
 @Composable
 fun MainGame (navController: NavController) {
@@ -76,6 +77,8 @@ fun MainGame (navController: NavController) {
     val isVectorSelected = remember { mutableStateOf(false) }
     val touchOffset = remember { mutableStateOf(Offset.Zero) }
     val imageSize = remember { mutableStateOf(Offset.Zero) }
+    val density = LocalDensity.current
+    val currentDensity2 = with (density) {34.dp.toPx() }
     Scaffold  { innerPadding ->
         Box(modifier = Modifier
             .padding(innerPadding)
@@ -118,6 +121,7 @@ fun MainGame (navController: NavController) {
                             tapOffset ->
                             if (isVectorSelected.value) {
                                 imagePosition.value = tapOffset - touchOffset.value
+                                calculatePosition(imagePosition,currentDensity2)
                                 isVectorSelected.value = false
                             }
                         }
@@ -146,11 +150,8 @@ fun MainGame (navController: NavController) {
                                         .border(width = 1.dp, color = Color.White)
                                         .width(34.dp)
                                         .height(34.dp)
-                                        .onSizeChanged { size -> boxSize = size }
 
-                                ){
-
-                                }
+                                )
                             }
                         }
                     }
@@ -185,8 +186,8 @@ fun DisplaySvg(context: Context, shipType : String,
             contentDescription = "Small Ship",
             imageLoader = imageLoader,
             modifier = Modifier
-                .width(50.dp)
-                .height(150.dp)
+                .width(70.dp)
+                .height(135.dp)
                 .offset{
                     IntOffset(
                         x = offset.value.x.roundToInt(),
@@ -204,8 +205,8 @@ fun DisplaySvg(context: Context, shipType : String,
                     detectTapGestures (
                         onTap = { tapOffset ->
                             touchOffset.value = Offset (
-                                x = tapOffset.x ,
-                                y = tapOffset.y
+                                x = imageSize.value.x / 2 ,
+                                y = imageSize.value.y / 2
                             )
                             isVectorSelected.value = true
 
@@ -214,6 +215,32 @@ fun DisplaySvg(context: Context, shipType : String,
 
                 }
         )
+}
 
+//x = 380, y = 420
+fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
+    val spacingX = spacings.roundToInt()
+    var offsetX = offset.value.x.roundToInt()
+    var offsetY = offset.value.y.roundToInt()
+    if ((offsetX % spacingX)> (spacingX/2)) {
+        offsetX = offsetX + spacingX
+        }
+    if ((offsetY % spacingX)>(spacingX/2)) {
+        offsetY = offsetY + spacingX
+    }
+    if (offsetX > (spacingX * 10)){
+        offsetX = (spacingX * 9)
+    }
+    if (offsetY > (spacingX * 8)){
+        offsetY = (spacingX * 7)
+    }
+    offsetX = offsetX / spacingX
+    offsetY = offsetY / spacingX
+    offsetX = offsetX * spacingX
+    offsetY = offsetY * spacingX
+    offset.value = Offset (
+        x = offsetX.toFloat(), y = offsetY.toFloat()
+    )
 
 }
+
