@@ -50,18 +50,16 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import kotlin.math.roundToInt
 
-
-data class ship (
-    var sizeX : Int,
-    var sizeY : Int
-    )
+// Todo --> Connect to the database
 
 //On second tap, place boat from the center of the boat to the right squars
 
 @Composable
 fun MainGame (navController: NavController) {
     val context = LocalContext.current
-    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+
+    //Todo --> Create an array for the cells with a boolean if occupied or not
+    //Todo --> Create an array of object "ships" that contains their sizes and if they are rotated or not
     val ships = Array(10) { row ->
         Array(10) { col ->
         }
@@ -73,12 +71,12 @@ fun MainGame (navController: NavController) {
         }
     }
 
-    val imagePosition = remember { mutableStateOf(Offset(0f, 0f)) }
-    val isVectorSelected = remember { mutableStateOf(false) }
-    val touchOffset = remember { mutableStateOf(Offset.Zero) }
-    val imageSize = remember { mutableStateOf(Offset.Zero) }
-    val density = LocalDensity.current
-    val currentDensity2 = with (density) {34.dp.toPx() }
+    val imagePosition = remember { mutableStateOf(Offset(0f, 0f)) } //starting position of the ship
+    val isVectorSelected = remember { mutableStateOf(false) } //check if the ship is selected
+    val touchOffset = remember { mutableStateOf(Offset.Zero) } //The ship placement from the center of the tap instead
+    val imageSize = remember { mutableStateOf(Offset.Zero) } //The ship image size
+    val density = LocalDensity.current //Allocated the variable density, converting from the density points to pixels for the offest
+    val currentDensity2 = with (density) {34.dp.toPx() } //Calculates the length of the cell for the offset
     Scaffold  { innerPadding ->
         Box(modifier = Modifier
             .padding(innerPadding)
@@ -120,6 +118,10 @@ fun MainGame (navController: NavController) {
                         onTap = {
                             tapOffset ->
                             if (isVectorSelected.value) {
+                                //Checks if the ship is taped, if it is place it in the middle of where the other tap is
+
+                                //This code might need refactoring if we are dealing with many ships instead!!!
+                                //Todo --> Make the ship rotatable and re-rendering the image
                                 imagePosition.value = tapOffset - touchOffset.value
                                 calculatePosition(imagePosition,currentDensity2)
                                 isVectorSelected.value = false
@@ -131,6 +133,7 @@ fun MainGame (navController: NavController) {
                 }
 
             ) {
+                //Rendering the cells
                 Column (
                     modifier = Modifier
                         .size(
@@ -157,6 +160,7 @@ fun MainGame (navController: NavController) {
                     }
 
                 }
+                //Rendering the first ship
                 DisplaySvg(context, "test1",
                     offset = imagePosition , isVectorSelected = isVectorSelected,
                     touchOffset = touchOffset, imageSize = imageSize)
@@ -167,6 +171,8 @@ fun MainGame (navController: NavController) {
 
 }
 
+
+//Render the ship based off its name
 @Composable
 fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
@@ -186,6 +192,7 @@ fun DisplaySvg(context: Context, shipType : String,
             contentDescription = "Small Ship",
             imageLoader = imageLoader,
             modifier = Modifier
+                //Todo --> Creating padding to be placed better
                 .width(70.dp)
                 .height(135.dp)
                 .offset{
@@ -194,6 +201,7 @@ fun DisplaySvg(context: Context, shipType : String,
                         y = offset.value.y.roundToInt()
                     )
                 }
+                //Assign the size of the current image
                 .onGloballyPositioned { layoutCoordinates ->
                     imageSize.value = Offset (
                         x = layoutCoordinates.size.width.toFloat(),
@@ -203,6 +211,7 @@ fun DisplaySvg(context: Context, shipType : String,
                 }
                 .pointerInput(Unit) {
                     detectTapGestures (
+                        //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
                             touchOffset.value = Offset (
                                 x = imageSize.value.x / 2 ,
@@ -217,7 +226,7 @@ fun DisplaySvg(context: Context, shipType : String,
         )
 }
 
-//x = 380, y = 420
+//align ship in cells After conversion from density point to normal pixels
 fun calculatePosition (offset : MutableState <Offset> , spacings : Float) {
     val spacingX = spacings.roundToInt()
     var offsetX = offset.value.x.roundToInt()
