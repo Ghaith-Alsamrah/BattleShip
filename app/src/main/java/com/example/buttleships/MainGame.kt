@@ -177,7 +177,8 @@ fun MainGame (navController: NavController) {
                     imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation, )
                 if (isVectorSelected.value){
                     Button(modifier = Modifier
-                        .align(Alignment.BottomEnd),
+                        .align(Alignment.BottomStart),
+
                         onClick = {
                             imageRotation += 90
                         }
@@ -214,7 +215,6 @@ fun DisplaySvg(context: Context, shipType : String,
             contentDescription = "Small Ship",
             imageLoader = imageLoader,
             modifier = Modifier
-                //Todo --> Creating padding to be placed better
                 .width(70.dp)
                 .height(180.dp)
                 .padding(20.dp)
@@ -246,7 +246,9 @@ fun DisplaySvg(context: Context, shipType : String,
                     )
 
                 }
-                .graphicsLayer { rotationZ =  rotationAnimation}
+                .graphicsLayer {
+                    rotationZ =  rotationAnimation
+                }
         )
 }
 
