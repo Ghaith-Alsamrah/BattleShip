@@ -80,7 +80,7 @@ fun lobby(navController : NavController) {
                     modifier = Modifier
                         .size(
                             width = 380.dp,
-                            height = 650.dp
+                            height = 550.dp
                         )
                         .background(Color.Black.copy(alpha = 0.5f))
                 ) {
@@ -132,7 +132,7 @@ fun lobby(navController : NavController) {
                 }
                 Button(
                     onClick = {
-                        navController.navigate(nav.lobby)
+                        navController.navigate(nav.mainGame)
                     },
                     colors = buttonColors(
                         // Changes the color of the button
