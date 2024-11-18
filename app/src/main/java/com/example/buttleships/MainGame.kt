@@ -195,6 +195,7 @@ fun MainGame (navController: NavController) {
 
 
 //Render the ship based off its name
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
@@ -236,12 +237,20 @@ fun DisplaySvg(context: Context, shipType : String,
                     detectTapGestures (
                         //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
-                            touchOffset.value = Offset (
-                                x = imageSize.value.x / 2 ,
-                                y = imageSize.value.y / 2
-                            )
-                            isVectorSelected.value = true
+                            if ((imageRotation.value % 180) > 0) {
+                                touchOffset.value = Offset (
+                                    x = imageSize.value.y / 2 ,
+                                    y = tapOffset.x + imageSize.value.x / 2
 
+                                )
+                                }else{
+                                touchOffset.value = Offset (
+                                    x = imageSize.value.x / 2 ,
+                                    y = imageSize.value.y / 2
+
+                                )
+                            }
+                            isVectorSelected.value = true
                         }
                     )
 
