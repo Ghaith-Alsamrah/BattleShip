@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -89,6 +90,7 @@ fun MainGame (navController: NavController) {
     val imageSize = remember { mutableStateOf(Offset.Zero) } //The ship image size
     val density = LocalDensity.current //Allocated the variable density, converting from the density points to pixels for the offest
     val currentDensity2 = with (density) {34.dp.toPx() } //Calculates the length of the cell for the offset
+    val isRotated = remember { mutableStateOf(false) }
 
 
 
@@ -183,14 +185,16 @@ fun MainGame (navController: NavController) {
                 DisplaySvg(context, "test1",
                     offset = imagePosition , isVectorSelected = isVectorSelected,
                     touchOffset = touchOffset, imageSize = imageSize,
-                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
-                    imagePosition)
+                    imageRotation = mutableFloatStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
+                    imagePosition, isRotated)
                 if (isVectorSelected.value){
                     Button(modifier = Modifier
                         .align(Alignment.BottomStart),
 
                         onClick = {
                             imageRotation += 90
+                            isRotated.value = !isRotated.value
+
                         }
                     ) { Text    (text = "Rotate")
                     }
@@ -211,8 +215,7 @@ fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
                touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
                 ,imageRotation : MutableState <Float>, rotationAnimation : Float, currentDensity2 : Float,
-               imagePosition: MutableState <Offset>) {
-
+               imagePosition: MutableState <Offset>, isRotated : MutableState<Boolean>) {
     val imageLoader = ImageLoader.Builder(context)
 
         .components {
@@ -255,12 +258,19 @@ fun DisplaySvg(context: Context, shipType : String,
                         onTap = { tapOffset ->
                             if (isVectorSelected.value) {
 
-                                //Todo --> Make the ship rotatable and re-rendering the image
-                                imagePosition.value = tapOffset
+                                if (isRotated.value) {
+                                    imagePosition.value = Offset(
+                                        (imagePosition.value.x + (tapOffset.x*2)),
+                                        imagePosition.value.y
+                                    )
+                                    /*
                                 calculatePosition(
                                     imagePosition, currentDensity2,
                                     imageRotation = imageRotation
                                 )
+
+                                     */
+                                }
                                 isVectorSelected.value = false
                             } else {
                                 if ((imageRotation.value % 180) > 0) {
