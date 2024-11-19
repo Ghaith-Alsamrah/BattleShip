@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,7 +55,9 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
 import coil.request.ErrorResult
 import coil.request.ImageRequest
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 // Todo --> Connect to the database
 
@@ -84,6 +89,10 @@ fun MainGame (navController: NavController) {
     val imageSize = remember { mutableStateOf(Offset.Zero) } //The ship image size
     val density = LocalDensity.current //Allocated the variable density, converting from the density points to pixels for the offest
     val currentDensity2 = with (density) {34.dp.toPx() } //Calculates the length of the cell for the offset
+
+
+
+
     Scaffold  { innerPadding ->
         Box(modifier = Modifier
             .padding(innerPadding)
@@ -174,7 +183,8 @@ fun MainGame (navController: NavController) {
                 DisplaySvg(context, "test1",
                     offset = imagePosition , isVectorSelected = isVectorSelected,
                     touchOffset = touchOffset, imageSize = imageSize,
-                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation, )
+                    imageRotation = mutableStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
+                    imagePosition)
                 if (isVectorSelected.value){
                     Button(modifier = Modifier
                         .align(Alignment.BottomStart),
@@ -200,7 +210,8 @@ fun MainGame (navController: NavController) {
 fun DisplaySvg(context: Context, shipType : String,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
                touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
-                ,imageRotation : MutableState <Float>, rotationAnimation : Float, ) {
+                ,imageRotation : MutableState <Float>, rotationAnimation : Float, currentDensity2 : Float,
+               imagePosition: MutableState <Offset>) {
 
     val imageLoader = ImageLoader.Builder(context)
 
@@ -208,7 +219,6 @@ fun DisplaySvg(context: Context, shipType : String,
             add(SvgDecoder.Factory())
         }
         .build()
-
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data("file:///android_asset/$shipType.svg")
@@ -233,31 +243,45 @@ fun DisplaySvg(context: Context, shipType : String,
                     )
 
                 }
+
+                .graphicsLayer {
+                    rotationZ =  imageRotation.value
+                }
                 .pointerInput(Unit) {
-                    detectTapGestures (
+                    detectTapGestures(
+
+
                         //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
-                            if ((imageRotation.value % 180) > 0) {
-                                touchOffset.value = Offset (
-                                    x = imageSize.value.y / 2 ,
-                                    y = tapOffset.x + imageSize.value.x / 2
+                            if (isVectorSelected.value) {
 
+                                //Todo --> Make the ship rotatable and re-rendering the image
+                                imagePosition.value = tapOffset
+                                calculatePosition(
+                                    imagePosition, currentDensity2,
+                                    imageRotation = imageRotation
                                 )
-                                }else{
-                                touchOffset.value = Offset (
-                                    x = imageSize.value.x / 2 ,
-                                    y = imageSize.value.y / 2
+                                isVectorSelected.value = false
+                            } else {
+                                if ((imageRotation.value % 180) > 0) {
+                                    touchOffset.value = Offset(
+                                        x = tapOffset.x + imageSize.value.y / 2,
+                                        y = tapOffset.x + imageSize.value.x / 2
 
-                                )
+                                    )
+                                } else {
+                                    touchOffset.value = Offset(
+                                        x = imageSize.value.x / 2,
+                                        y = imageSize.value.y / 2
+
+                                    )
+                                }
+                                isVectorSelected.value = true
                             }
-                            isVectorSelected.value = true
                         }
                     )
+                }
 
-                }
-                .graphicsLayer {
-                    rotationZ =  rotationAnimation
-                }
         )
 }
 
@@ -287,4 +311,3 @@ fun calculatePosition (offset : MutableState <Offset>, spacings : Float,
     )
 
 }
-

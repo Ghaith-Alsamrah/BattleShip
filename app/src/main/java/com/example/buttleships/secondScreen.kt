@@ -71,7 +71,7 @@ fun secondScreen (navController: NavController) {
                 )
                 Button(
                     onClick = {
-                        dataBase.NewPlayer("player5", name)
+                        dataBase.NewPlayer("player1", name)
                         navController.navigate(nav.lobby)
                     },
                     colors = buttonColors( // this will make the button it self red

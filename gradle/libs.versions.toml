@@ -12,6 +12,7 @@ composeBom = "2024.04.01"
 navigationCompose = "2.8.3"
 coil = "2.4.0"
 firebaseFirestore = "25.1.1"
+firebaseFirestoreKtx = "25.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coil" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 
 
 
