@@ -64,17 +64,32 @@ import kotlin.math.sin
 
 //On second tap, place boat from the center of the boat to the right squars
 
+data class shipType (
+    val length: Int,
+    val shipName: String,
+    var rotation : Float,
+    var isShipSelected: Boolean,
+
+)
+
+
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun MainGame (navController: NavController) {
     val context = LocalContext.current
 
-    //Todo --> Create an array for the cells with a boolean if occupied or not
+    //Todo --> Create an array for the cells with a boolean if occupied or nots
     //Todo --> Create an array of object "ships" that contains their sizes and if they are rotated or not
-    val ships = Array(10) { row ->
-        Array(10) { col ->
-        }
-    }
+
+    val ships = arrayOf(
+        shipType(length = 5, shipName = "5x1", rotation = 0f, isShipSelected = false),
+        shipType(length = 4, shipName = "4x1", rotation = 0f, isShipSelected = false),
+        shipType(length = 3, shipName = "3x1", rotation = 0f, isShipSelected = false),
+        shipType(length = 2, shipName = "2x1", rotation = 0f, isShipSelected = false),
+        shipType(length = 1, shipName = "1x1", rotation = 0f, isShipSelected = false),
+    )
+
+
 
     val cells = Array(10) { row ->
         Array(10) {col ->
@@ -181,12 +196,16 @@ fun MainGame (navController: NavController) {
                     }
 
                 }
+
                 //Rendering the first ship
-                DisplaySvg(context, "test1",
-                    offset = imagePosition , isVectorSelected = isVectorSelected,
-                    touchOffset = touchOffset, imageSize = imageSize,
-                    imageRotation = mutableFloatStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
-                    imagePosition, isRotated)
+                for (ship in ships) {
+                    DisplaySvg(context, ship,
+                        offset = imagePosition , isVectorSelected = isVectorSelected,
+                        touchOffset = touchOffset, imageSize = imageSize,
+                        imageRotation = mutableFloatStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
+                        imagePosition, isRotated)
+                }
+
                 if (isVectorSelected.value){
                     Button(modifier = Modifier
                         .align(Alignment.BottomStart),
@@ -211,11 +230,12 @@ fun MainGame (navController: NavController) {
 //Render the ship based off its name
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun DisplaySvg(context: Context, shipType : String,
+fun DisplaySvg(context: Context, shipType : shipType,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
                touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
                 ,imageRotation : MutableState <Float>, rotationAnimation : Float, currentDensity2 : Float,
                imagePosition: MutableState <Offset>, isRotated : MutableState<Boolean>) {
+    val size = 34 * shipType.length
     val imageLoader = ImageLoader.Builder(context)
 
         .components {
@@ -224,14 +244,14 @@ fun DisplaySvg(context: Context, shipType : String,
         .build()
         AsyncImage(
             model = ImageRequest.Builder(context)
-                .data("file:///android_asset/$shipType.svg")
+                .data("file:///android_asset/${shipType.shipName}.svg")
                 .build(),
             contentDescription = "Small Ship",
             imageLoader = imageLoader,
             modifier = Modifier
                 .width(70.dp)
-                .height(180.dp)
-                .padding(20.dp)
+                .height((size * 2).dp)
+                .padding(20.dp )
                 .offset{
                     IntOffset(
                         x = offset.value.x.roundToInt(),
@@ -257,19 +277,16 @@ fun DisplaySvg(context: Context, shipType : String,
                         //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
                             if (isVectorSelected.value) {
-
                                 if (isRotated.value) {
                                     imagePosition.value = Offset(
-                                        (imagePosition.value.x + (tapOffset.x*2)),
+                                        (imagePosition.value.x - ( tapOffset.y -imageSize.value.y /2)),
                                         imagePosition.value.y
                                     )
-                                    /*
-                                calculatePosition(
-                                    imagePosition, currentDensity2,
-                                    imageRotation = imageRotation
-                                )
-
-                                     */
+                                }else{
+                                    imagePosition.value = Offset(
+                                        (imagePosition.value.x ),
+                                        imagePosition.value.y + (tapOffset.y -imageSize.value.y /2)
+                                    )
                                 }
                                 isVectorSelected.value = false
                             } else {
@@ -286,7 +303,7 @@ fun DisplaySvg(context: Context, shipType : String,
 
                                     )
                                 }
-                                isVectorSelected.value = true
+                                shipType.isShipSelected = true
                             }
                         }
                     )
@@ -319,5 +336,6 @@ fun calculatePosition (offset : MutableState <Offset>, spacings : Float,
     offset.value = Offset (
         x = offsetX.toFloat(), y = offsetY.toFloat()
     )
-
 }
+
+
