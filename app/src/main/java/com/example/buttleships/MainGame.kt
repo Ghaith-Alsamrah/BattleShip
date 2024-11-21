@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,10 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -36,42 +32,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
-import coil.request.ErrorResult
 import coil.request.ImageRequest
-import kotlin.math.cos
 import kotlin.math.roundToInt
-import kotlin.math.sin
 
 // Todo --> Connect to the database
 
 //On second tap, place boat from the center of the boat to the right squars
 
-data class shipType (
+data class ShipType (
     val length: Int,
     val shipName: String,
-    var rotation : Float,
-    var isShipSelected: Boolean,
-
+    var rotationState : Float = 0f,
+    var isShipSelectedState: Boolean = false,
+    var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
+    var centerOfImageState: Offset = Offset (0f,0f)
 )
 
+@Composable
+fun shipWithValueRemember (length: Int, name: String, rotation: Float = 0f,
+                           isShipSelected: Boolean = false, offset: Offset = Offset(0f,0f),
+                           centerOfImageState : Offset = Offset (0f, 0f)) : ShipType {
+    val rotation = remember { mutableStateOf(rotation) }
+    val isShipSelected = remember { mutableStateOf(isShipSelected) }
+    val offset = remember { mutableStateOf(offset) }
+    val centerOfImage = remember { mutableStateOf(centerOfImageState) }
+    return ShipType(
+        length = length,
+        shipName = name,
+        rotationState = rotation.value,
+        isShipSelectedState = isShipSelected.value,
+        offsetState = offset,
+        centerOfImageState = centerOfImage.value
+    ).apply {
+        this.rotationState = rotation.value
+        this.isShipSelectedState = isShipSelected.value
+        this.offsetState = offset
+        this.centerOfImageState = centerOfImage.value
+    }
+}
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
@@ -82,11 +91,11 @@ fun MainGame (navController: NavController) {
     //Todo --> Create an array of object "ships" that contains their sizes and if they are rotated or not
 
     val ships = arrayOf(
-        shipType(length = 5, shipName = "5x1", rotation = 0f, isShipSelected = false),
-        shipType(length = 4, shipName = "4x1", rotation = 0f, isShipSelected = false),
-        shipType(length = 3, shipName = "3x1", rotation = 0f, isShipSelected = false),
-        shipType(length = 2, shipName = "2x1", rotation = 0f, isShipSelected = false),
-        shipType(length = 1, shipName = "1x1", rotation = 0f, isShipSelected = false),
+        shipWithValueRemember(5,"5x1"),
+        shipWithValueRemember(4,"4x1"),
+        shipWithValueRemember(3,"3x1"),
+        shipWithValueRemember(2,"2x1"),
+        shipWithValueRemember(1,"1x1")
     )
 
 
@@ -150,18 +159,36 @@ fun MainGame (navController: NavController) {
                     detectTapGestures (
                         onTap = {
                             tapOffset ->
-                            if (isVectorSelected.value) {
+                            Log.d("test","testt")
+                            for (ship in ships){
+                                if (ship.isShipSelectedState) {
+                                    Log.d("test","test2")
 
-                                //Checks if the ship is taped, if it is place it in the middle of where the other tap is
+                                    ship.offsetState.value = tapOffset - touchOffset.value
+                                    Log.d("test",ship.shipName.toString())
+                                    calculatePosition(
+                                        ship,currentDensity2
+                                    )
+                                    ship.isShipSelectedState= false
+                                }
+                                /*
+                                if (ship.isShipSelectedState) {
 
-                                //This code might need refactoring if we are dealing with many ships instead!!!
-                                //Todo --> Make the ship rotatable and re-rendering the image
-                                imagePosition.value = tapOffset - touchOffset.value
-                                calculatePosition(imagePosition,currentDensity2,
-                                    imageRotation = mutableStateOf(imageRotation)
-                                )
-                                isVectorSelected.value = false
+                                    //Checks if the ship is taped, if it is place it in the middle of where the other tap is
+
+                                    //This code might need refactoring if we are dealing with many ships instead!!!
+                                    //Todo --> Make the ship rotatable and re-rendering the image
+                                    ship.offsetState = tapOffset - touchOffset.value
+                                    calculatePosition(
+                                        mutableStateOf(ship.offsetState) ,currentDensity2,
+                                        imageRotation = mutableStateOf(imageRotation)
+                                    )
+                                    ship.isShipSelectedState = false
+                                }
+
+                                 */
                             }
+                            
                         }
                     )
 
@@ -204,8 +231,20 @@ fun MainGame (navController: NavController) {
                         touchOffset = touchOffset, imageSize = imageSize,
                         imageRotation = mutableFloatStateOf(imageRotation) , rotationAnimation = rotationAnimation, currentDensity2,
                         imagePosition, isRotated)
-                }
+                    if (ship.isShipSelectedState){
+                        Button(modifier = Modifier
+                            .align(Alignment.BottomStart),
 
+                            onClick = {
+                                ship.rotationState += 90
+                                isRotated.value = !isRotated.value
+
+                            }
+                        ) { Text    (text = "Rotate")
+                        }
+                    }
+                }
+/*
                 if (isVectorSelected.value){
                     Button(modifier = Modifier
                         .align(Alignment.BottomStart),
@@ -219,6 +258,8 @@ fun MainGame (navController: NavController) {
                     }
                 }
 
+ */
+
             }
 
         }
@@ -230,12 +271,12 @@ fun MainGame (navController: NavController) {
 //Render the ship based off its name
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun DisplaySvg(context: Context, shipType : shipType,
+fun DisplaySvg(context: Context, ship : ShipType,
                offset: MutableState<Offset>, isVectorSelected: MutableState <Boolean>,
                touchOffset : MutableState <Offset>, imageSize : MutableState <Offset>
-                ,imageRotation : MutableState <Float>, rotationAnimation : Float, currentDensity2 : Float,
+               , imageRotation : MutableState <Float>, rotationAnimation : Float, currentDensity2 : Float,
                imagePosition: MutableState <Offset>, isRotated : MutableState<Boolean>) {
-    val size = 34 * shipType.length
+    val size = 34 * ship.length
     val imageLoader = ImageLoader.Builder(context)
 
         .components {
@@ -244,18 +285,18 @@ fun DisplaySvg(context: Context, shipType : shipType,
         .build()
         AsyncImage(
             model = ImageRequest.Builder(context)
-                .data("file:///android_asset/${shipType.shipName}.svg")
+                .data("file:///android_asset/${ship.shipName}.svg")
                 .build(),
             contentDescription = "Small Ship",
             imageLoader = imageLoader,
             modifier = Modifier
-                .width(70.dp)
-                .height((size * 2).dp)
-                .padding(20.dp )
+                //.width((size*2).dp)
+                .height((size*1.6).dp)
+                .padding(10.dp)
                 .offset{
                     IntOffset(
-                        x = offset.value.x.roundToInt(),
-                        y = offset.value.y.roundToInt()
+                        x = ship.offsetState.value.x.roundToInt(),
+                        y = ship.offsetState.value.y.roundToInt()
                     )
                 }
                 //Assign the size of the current image
@@ -276,21 +317,31 @@ fun DisplaySvg(context: Context, shipType : shipType,
 
                         //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
-                            if (isVectorSelected.value) {
-                                if (isRotated.value) {
-                                    imagePosition.value = Offset(
-                                        (imagePosition.value.x - ( tapOffset.y -imageSize.value.y /2)),
-                                        imagePosition.value.y
+                            Log.d ("test", ship.shipName)
+                            whatever(
+                                imagePosition = imagePosition,
+                                tapOffset = tapOffset,
+                                imageSize = imageSize,
+                                imageRotation = imageRotation,
+                                touchOffset = touchOffset,
+                                shipType = ship
+                            )
+                            /*
+                            if (ship.isShipSelectedState) {
+                                if (ship.rotationState > 0) {
+                                    ship.offsetState = Offset(
+                                        (ship.offsetState.x - ( tapOffset.y -imageSize.value.y /2)),
+                                        ship.offsetState.y
                                     )
                                 }else{
-                                    imagePosition.value = Offset(
-                                        (imagePosition.value.x ),
-                                        imagePosition.value.y + (tapOffset.y -imageSize.value.y /2)
+                                    ship.offsetState = Offset(
+                                        (ship.offsetState.x ),
+                                        ship.offsetState.y + (tapOffset.y -imageSize.value.y /2)
                                     )
                                 }
-                                isVectorSelected.value = false
+                                ship.isShipSelectedState = false
                             } else {
-                                if ((imageRotation.value % 180) > 0) {
+                                if ((ship.rotationState % 180) > 0) {
                                     touchOffset.value = Offset(
                                         x = tapOffset.x + imageSize.value.y / 2,
                                         y = tapOffset.x + imageSize.value.x / 2
@@ -303,8 +354,9 @@ fun DisplaySvg(context: Context, shipType : shipType,
 
                                     )
                                 }
-                                shipType.isShipSelected = true
+                                ship.isShipSelectedState = true
                             }
+                            */
                         }
                     )
                 }
@@ -313,12 +365,11 @@ fun DisplaySvg(context: Context, shipType : shipType,
 }
 
 //align ship in cells After conversion from density point to normal pixels
-fun calculatePosition (offset : MutableState <Offset>, spacings : Float,
-                       imageRotation: MutableState<Float> ) {
+fun calculatePosition (ship : ShipType, spacings : Float, ) {
     //Todo --> The padding logic might need to change depending on the ship!
     val spacingX = spacings.roundToInt()
-    var offsetX = offset.value.x.roundToInt()
-    var offsetY = offset.value.y.roundToInt()
+    var offsetX = ship.offsetState.value.x.roundToInt()
+    var offsetY = ship.offsetState.value.y.roundToInt()
     if (offsetX > (spacingX * 10)){
         offsetX = (spacingX * 9)
     }
@@ -330,12 +381,51 @@ fun calculatePosition (offset : MutableState <Offset>, spacings : Float,
     offsetY = offsetY / spacingX
     offsetX = offsetX * spacingX + (spacingX/15)
     offsetY = offsetY * spacingX
-    if ((imageRotation.value % 180 ) > 0){
+    if ((ship.rotationState % 180 ) > 0){
         offsetY -= spacingX  - (spacingX /2 )
     }
-    offset.value = Offset (
+    ship.offsetState.value = Offset (
         x = offsetX.toFloat(), y = offsetY.toFloat()
     )
 }
 
 
+//fun changeShipToOffset
+
+
+fun whatever ( imagePosition: MutableState<Offset>,
+              tapOffset : Offset, imageSize: MutableState<Offset>, imageRotation: MutableState<Float>,
+               touchOffset: MutableState<Offset>,
+              shipType:ShipType) {
+
+    val isRotated = ((shipType.rotationState % 180) > 0)
+    if (shipType.isShipSelectedState) {
+        if (isRotated) {
+            imagePosition.value = Offset(
+                (imagePosition.value.x - ( tapOffset.y -imageSize.value.y /2)),
+                imagePosition.value.y
+            )
+        }else{
+            imagePosition.value = Offset(
+                (imagePosition.value.x ),
+                imagePosition.value.y + (tapOffset.y -imageSize.value.y /2)
+            )
+        }
+        shipType.isShipSelectedState = false
+    } else {
+        if ((imageRotation.value % 180) > 0) {
+            touchOffset.value = Offset(
+                x = tapOffset.x + imageSize.value.y / 2,
+                y = tapOffset.x + imageSize.value.x / 2
+
+            )
+        } else {
+            touchOffset.value = Offset(
+                x = imageSize.value.x / 2,
+                y = imageSize.value.y / 2
+
+            )
+        }
+        shipType.isShipSelectedState = true
+    }
+}
