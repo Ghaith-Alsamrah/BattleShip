@@ -244,22 +244,6 @@ fun MainGame (navController: NavController) {
                         }
                     }
                 }
-/*
-                if (isVectorSelected.value){
-                    Button(modifier = Modifier
-                        .align(Alignment.BottomStart),
-
-                        onClick = {
-                            imageRotation += 90
-                            isRotated.value = !isRotated.value
-
-                        }
-                    ) { Text    (text = "Rotate")
-                    }
-                }
-
- */
-
             }
 
         }
@@ -292,7 +276,7 @@ fun DisplaySvg(context: Context, ship : ShipType,
             modifier = Modifier
                 //.width((size*2).dp)
                 .height((size*1.6).dp)
-                .padding(10.dp)
+
                 .offset{
                     IntOffset(
                         x = ship.offsetState.value.x.roundToInt(),
@@ -317,7 +301,7 @@ fun DisplaySvg(context: Context, ship : ShipType,
 
                         //Sends the calculating variable of center of the image to be placed at the center later on as well
                         onTap = { tapOffset ->
-                            Log.d ("test", ship.shipName)
+                            Log.d ("test", ship.offsetState.value.toString())
                             whatever(
                                 imagePosition = imagePosition,
                                 tapOffset = tapOffset,
@@ -326,37 +310,7 @@ fun DisplaySvg(context: Context, ship : ShipType,
                                 touchOffset = touchOffset,
                                 shipType = ship
                             )
-                            /*
-                            if (ship.isShipSelectedState) {
-                                if (ship.rotationState > 0) {
-                                    ship.offsetState = Offset(
-                                        (ship.offsetState.x - ( tapOffset.y -imageSize.value.y /2)),
-                                        ship.offsetState.y
-                                    )
-                                }else{
-                                    ship.offsetState = Offset(
-                                        (ship.offsetState.x ),
-                                        ship.offsetState.y + (tapOffset.y -imageSize.value.y /2)
-                                    )
-                                }
-                                ship.isShipSelectedState = false
-                            } else {
-                                if ((ship.rotationState % 180) > 0) {
-                                    touchOffset.value = Offset(
-                                        x = tapOffset.x + imageSize.value.y / 2,
-                                        y = tapOffset.x + imageSize.value.x / 2
 
-                                    )
-                                } else {
-                                    touchOffset.value = Offset(
-                                        x = imageSize.value.x / 2,
-                                        y = imageSize.value.y / 2
-
-                                    )
-                                }
-                                ship.isShipSelectedState = true
-                            }
-                            */
                         }
                     )
                 }
@@ -383,10 +337,11 @@ fun calculatePosition (ship : ShipType, spacings : Float, ) {
     offsetY = offsetY * spacingX
     if ((ship.rotationState % 180 ) > 0){
         offsetY -= spacingX  - (spacingX /2 )
-    }
+    }else{
     ship.offsetState.value = Offset (
         x = offsetX.toFloat(), y = offsetY.toFloat()
     )
+        }
 }
 
 
@@ -410,10 +365,11 @@ fun whatever ( imagePosition: MutableState<Offset>,
                 (imagePosition.value.x ),
                 imagePosition.value.y + (tapOffset.y -imageSize.value.y /2)
             )
+            println("position" +  shipType.offsetState.value.x + " " + shipType.offsetState.value.y)
         }
         shipType.isShipSelectedState = false
     } else {
-        if ((imageRotation.value % 180) > 0) {
+        if ((shipType.rotationState % 180) > 0) {
             touchOffset.value = Offset(
                 x = tapOffset.x + imageSize.value.y / 2,
                 y = tapOffset.x + imageSize.value.x / 2
