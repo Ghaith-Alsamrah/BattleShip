@@ -50,14 +50,7 @@ import kotlin.math.roundToInt
 
 //On second tap, place boat from the center of the boat to the right squars
 
-data class ShipType (
-    val length: Int,
-    val shipName: String,
-    var rotationState : Float = 0f,
-    var isShipSelectedState: Boolean = false,
-    var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
-    var centerOfImageState: Offset = Offset (0f,0f)
-)
+
 
 @Composable
 fun shipWithValueRemember (length: Int, name: String, rotation: Float = 0f,

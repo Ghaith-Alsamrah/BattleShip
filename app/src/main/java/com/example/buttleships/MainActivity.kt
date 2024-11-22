@@ -17,10 +17,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,13 +40,31 @@ data class player(
     var status: String = "offline",
 )
 
+data class game(
+    var gameBoard: List<Boolean> = List(100) {false},
+    var player1ships: List<Boolean> = List(5) {false},
+    var player2ships: List<Boolean> = List(5) {false},
+    var clickBoard: List<Boolean> = List(100) {false},
+    var gameState: String = "invite",
+    var player1Id: String = "",
+    var player2Id: String = ""
+)
 
+data class ShipType (
+    val length: Int,
+    val shipName: String,
+    var rotationState : Float = 0f,
+    var isShipSelectedState: Boolean = false,
+    var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
+    var centerOfImageState: Offset = Offset (0f,0f)
+)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ButtleshipsTheme {
+                val dataBase = dataBase()
                 dataBase.MakeListner()
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "firstScreen" , builder = {
