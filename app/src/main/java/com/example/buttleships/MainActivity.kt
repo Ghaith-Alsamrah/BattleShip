@@ -35,9 +35,7 @@ import com.example.buttleships.nav.mainGame
 import com.example.buttleships.ui.theme.ButtleshipsTheme
 
 data class player(
-    val playerId: String = "",
     var name: String = "",
-    var status: String = "offline",
 )
 
 data class game(
@@ -58,6 +56,7 @@ data class ShipType (
     var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
     var centerOfImageState: Offset = Offset (0f,0f)
 )
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,17 +64,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             ButtleshipsTheme {
                 val dataBase = dataBase()
-                dataBase.MakeListner()
+                dataBase.listentoPlayer()
+                dataBase.listentoGame()
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "firstScreen" , builder = {
                     composable(nav.firstScreen) {
                         firstScreen(navController = navController)
                     }
                     composable(nav.secondScreen) {
-                        secondScreen(navController = navController)
+                        secondScreen(navController = navController, dataBase)
                     }
                     composable(nav.lobby) {
-                        lobby(navController = navController)
+                        lobby(navController = navController, dataBase)
                     }
                     composable (nav.mainGame) {
                         MainGame(navController = navController)
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GreetingPreview() {
     ButtleshipsTheme {
-        lobby( navController = rememberNavController())
+       //lobby( navController = rememberNavController())
     }
 }
 

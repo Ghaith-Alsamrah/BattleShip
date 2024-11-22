@@ -26,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 
 import androidx.compose.material3.TextField
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,8 +48,23 @@ import kotlinx.coroutines.flow.asStateFlow
 
 
 @Composable
-fun lobby(navController : NavController) {
+fun lobby(navController : NavController, dataBase: dataBase) {
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
+    val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
+
+    LaunchedEffect(games) {
+        games.forEach { (gameId, game) ->
+            // TODO: Popup with accept invite?
+            if ((game.player1Id == dataBase.localPlayerId.value || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
+                navController.navigate(nav.mainGame)
+            }
+        }
+    }
+
+    var playerName = "Unknown?"
+    players[dataBase.localPlayerId.value]?.let {
+        playerName = it.name
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {// This box allows you to have multiple things on top of each other
@@ -87,64 +103,96 @@ fun lobby(navController : NavController) {
                         )
                         .background(Color.Black.copy(alpha = 0.5f))
                 ) {
-                    dataBase.deleteOfflinePlayers()
                     // names column
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize() .padding(top = 15.dp),
+                        modifier = Modifier.fillMaxSize().padding(top = 15.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp) // for spacing between items
                     ) {
-                        items(players) { player ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 15.dp)
-                                    .clickable {
-                                        navController.navigate("mainGame")
-                                    },
-                                verticalAlignment = Alignment.CenterVertically,
+                        items(players.entries.toList()) { (documentId, player) ->
+                            if (documentId != dataBase.localPlayerId.value) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 15.dp)
+                                        .clickable {
+                                            navController.navigate("mainGame")
+                                        },
+                                    verticalAlignment = Alignment.CenterVertically,
 
-                            ) {
+                                    ) {
 
                                     // Black circle/point
                                     Canvas(modifier = Modifier.size(13.dp)) {
                                         drawCircle(color = Color.White)
                                     }
-                                Spacer(modifier = Modifier.width(15.dp)) // Space between circle and text
-                                Text(
-                                    text = player.name,
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    modifier = Modifier.weight(1f)
-
-                                )
-                                TextButton(
-                                    onClick = { /* Handle button action */ },
-                                    modifier = Modifier.padding(end = 10.dp)
-                                ) {
-                                    Text("Invite",
-                                        fontWeight = FontWeight.ExtraBold,
+                                    Spacer(modifier = Modifier.width(15.dp)) // Space between circle and text
+                                    Text(
+                                        text = player.name,
                                         color = Color.White,
-                                        fontSize = 16.sp
+                                        fontSize = 16.sp,
+                                        modifier = Modifier.weight(1f)
+
                                     )
+                                    var hasGame = false
+                                    games.forEach { (gameId, game) ->
+                                        if (game.player1Id == dataBase.localPlayerId.value
+                                            && game.gameState == "invite"
+                                        ) {
+                                            Text(
+                                                "waiting for invite",
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.White,
+                                                fontSize = 16.sp
+                                            )
+                                        } else if (game.player2Id == dataBase.localPlayerId.value
+                                            && game.gameState == "invite"
+                                        ) {
+                                            TextButton(
+                                                onClick = {
+                                                    dataBase.UpdatGame(gameId)
+                                                    navController.navigate(nav.mainGame)
+                                                },
+                                                modifier = Modifier.padding(end = 10.dp)
+                                            ) {
+                                                Text(
+                                                    "Invite",
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    color = Color.White,
+                                                    fontSize = 16.sp
+                                                )
+                                                hasGame = true
+                                            }
+                                        }
+                                    }
+
+
+                                    if (!hasGame) {
+                                        Button(
+                                            onClick = {
+                                                dataBase.db?.collection("games")
+                                                    ?.add(
+                                                        game(
+                                                            gameState = "invite",
+                                                            player1Id = dataBase.localPlayerId.value!!,
+                                                            player2Id = documentId
+                                                        )
+                                                    )
+                                            },
+                                            colors = buttonColors(
+                                                // Changes the color of the button
+                                                containerColor = Color.Red,
+                                            ),
+                                            modifier = Modifier.padding(20.dp)
+                                        ) {
+                                            Text("Play", color = Color.White)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                Button(
-                    onClick = {
-                        navController.navigate(nav.mainGame)
-                    },
-                    colors = buttonColors(
-                        // Changes the color of the button
-                        containerColor = Color.Red,
-                    ),
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Text("Play", color = Color.White)
-                }
             }
         }
     }
-
 }

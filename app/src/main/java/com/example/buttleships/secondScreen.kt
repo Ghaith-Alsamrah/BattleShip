@@ -1,5 +1,6 @@
 package com.example.buttleships
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,52 +37,70 @@ import coil.compose.rememberAsyncImagePainter
 
 
 @Composable
-fun secondScreen (navController: NavController) {
-    var name by remember{ mutableStateOf("") }
+fun secondScreen (navController: NavController, dataBase: dataBase) {
+    val sharedPreferences = LocalContext.current.getSharedPreferences("BattleShipPrefs", Context.MODE_PRIVATE)
     var errorMessage by remember { mutableStateOf("") }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {// the box is allow you to have multiple things over each other
-            Image(
-                painter = painterResource(R.drawable.background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+    // Check for playerId in SharedPreferences
+    LaunchedEffect(Unit) {
+        dataBase.localPlayerId.value = sharedPreferences.getString("playerId", null)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
+        if (dataBase.localPlayerId.value != null) {
+            navController.navigate("lobby")
+        }
+    }
+    if (dataBase.localPlayerId.value == null) {
+        var name by remember{ mutableStateOf("") }
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {// the box is allow you to have multiple things over each other
+                Image(
+                    painter = painterResource(R.drawable.background),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
 
-                verticalArrangement = Arrangement.Bottom, // putt the button in the middil of the page
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Enter Your Name", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold,
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = Color.Black,
-                            offset = Offset(5f, 5f), // Controls thickness; adjust as needed
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+
+                    verticalArrangement = Arrangement.Bottom, // putt the button in the middil of the page
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Enter Your Name",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black,
+                                offset = Offset(5f, 5f), // Controls thickness; adjust as needed
+                            )
                         )
                     )
-                )
-                TextField(modifier = Modifier.padding(20.dp),
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Your Name") }
+                    TextField(modifier = Modifier.padding(20.dp),
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Your Name") }
 
-                )
-                Button(
-                    onClick = {
-                        dataBase.NewPlayer("player1", name)
-                        navController.navigate(nav.lobby)
-                    },
-                    colors = buttonColors( // this will make the button it self red
-                        containerColor = Color.Red
                     )
-                ) {
-                    Text("Enter", color = Color.White)
+                    Button(
+                        onClick = {
+                            if(name.isNotBlank()) {
+                                dataBase.makeNewPlaye(name)
+                                sharedPreferences.edit().putString("playerId", dataBase.localPlayerId.value).apply()
+                                navController.navigate(nav.lobby)
+                            }
+                                  },
+                        colors = buttonColors( // this will make the button it self red
+                            containerColor = Color.Red
+                        )
+                    ) {
+                        Text("Enter", color = Color.White)
+                    }
+                    Row(modifier = Modifier.padding(100.dp)) {}
                 }
-                Row  (modifier = Modifier.padding(100.dp)) {}
             }
         }
     }
