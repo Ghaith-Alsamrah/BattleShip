@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
                         lobby(navController = navController, dataBase)
                     }
                     composable (nav.mainGame) {
-                        MainGame(navController = navController)
+                        MainGame2(navController = navController)
                     }
                 })
 
