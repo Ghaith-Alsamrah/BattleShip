@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -47,11 +48,11 @@ class Ships (name: String, length: Int, shipImage: Int) {
 }
 
 val battleShips = arrayOf(
-    Ships ("1x1", 1, shipImage = R.drawable.ship1x1 ),
-    Ships ("1x2", 2, R.drawable.ship2x1),
-    Ships ("1x3", 3, R.drawable.ship3x1),
-    Ships ("1x4", 4, R.drawable.ship4x1),
-    Ships ("1x5", 5, R.drawable.ship3x1),
+    Ships ("1x1", 1, shipImage = R.drawable.ship1x1copy ),
+    Ships ("1x2", 2, R.drawable.ship2x1copy),
+    Ships ("1x3", 3, R.drawable.ship3x1copy),
+    Ships ("1x4", 4, R.drawable.ship4x1copy),
+    Ships ("1x5", 5, R.drawable.ship3x1copy),
 )
 class Cell () {
     var ships: MutableList<Ships> = mutableListOf()
@@ -96,17 +97,21 @@ class Cell () {
     @Composable
     fun DrawImage(){
         val currentShip = ships.last()
-        Box (modifier = Modifier.fillMaxSize()){
+        Box (modifier = Modifier.fillMaxSize()
+            .padding(20.dp)
+            .padding(bottom = 40.dp)){
             Image(
                 painter = painterResource(id = ships.last().image),
                 contentDescription = "Description of your image",
-                contentScale = ContentScale.None,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
 
                     .rotate(90f)
-                    .width(34.dp)
+                    //.width(34.dp)
                     .height((34*ships.last().shipLength).dp)
-                    .absoluteOffset((currentShip.position.row*34) .dp,(currentShip.position.column*34) .dp)
+                    .absoluteOffset((currentShip.startPosition.row)    .dp,
+                                    (currentShip.startPosition.column) .dp
+                    )
 
                 //.width(34.dp)
             )
@@ -140,7 +145,6 @@ class Grid () {
                                 .size(34.dp)
 
                             )
-
                             {
                                 currentCell.DrawBox(onClick = {
                                     if (selectedShip != null) {
@@ -155,7 +159,7 @@ class Grid () {
                                     if (i == currentCell.ships.last().startPosition.row &&
                                         j == currentCell.ships.last().startPosition.column){
                                         Log.d("test", "Trying to print a ship msg")
-                                        currentCell.DrawImage()
+                                        //currentCell.DrawImage()
                                     }
                                 }
                             }
