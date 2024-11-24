@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,22 +38,29 @@ import androidx.navigation.NavController
 
 
 data class Position (val row: Int, val column: Int)
-class Ships (name: String, length: Int, shipImage: Int) {
+class Ships (name: String, length: Int, shipImage: Int, shipRotatedImage: Int) {
     val shipName: String = name
     val shipLength : Int = length
     var isRotated : Boolean = false
     var isSelected: Boolean = false
     var position: Position = Position(0,0)
+    var startPosition2: MutableState<Position> =  (mutableStateOf(Position(0,0)) )
     var startPosition: Position = Position(0,0)
     val image: Int =  shipImage
+    val imageRotation : MutableState<Float> = (mutableStateOf(0f))
 }
 
 val battleShips = arrayOf(
-    Ships ("1x1", 1, shipImage = R.drawable.ship1x1copy ),
-    Ships ("1x2", 2, R.drawable.ship2x1copy),
-    Ships ("1x3", 3, R.drawable.ship3x1copy),
-    Ships ("1x4", 4, R.drawable.ship4x1copy),
-    Ships ("1x5", 5, R.drawable.ship3x1copy),
+    Ships ("1x1", 1, shipImage = R.drawable.ship1x1copy,
+        shipRotatedImage = R.drawable.ship1x1rotated),
+    Ships ("1x2", 2, R.drawable.ship2x1copy,
+            shipRotatedImage = R.drawable.ship2x1rotated),
+    Ships ("1x3", 3, R.drawable.ship3x1copy,
+        shipRotatedImage = R.drawable.ship3x1rotated),
+    Ships ("1x4", 4, R.drawable.ship4x1copy,
+        shipRotatedImage = R.drawable.ship4x1rotated),
+    Ships ("1x5", 5, R.drawable.ship3x1copy,
+        shipRotatedImage = R.drawable.ship3x1rotated),
 )
 class Cell () {
     var ships: MutableList<Ships> = mutableListOf()
@@ -78,7 +86,7 @@ class Cell () {
         this.currentColor = selectColor()
     }
     fun removeShip () {
-        this.ships.remove(this.ships.first())
+        this.ships.remove(this.ships.last())
         reassignColor()
     }
     @Composable
@@ -97,21 +105,28 @@ class Cell () {
     @Composable
     fun DrawImage(){
         val currentShip = ships.last()
+        //currentShip.isRotated = true
+        Log.d("test", currentShip.startPosition.toString())
         Box (modifier = Modifier.fillMaxSize()
             .padding(20.dp)
             .padding(bottom = 40.dp)){
             Image(
                 painter = painterResource(id = ships.last().image),
-                contentDescription = "Description of your image",
+                contentDescription = "${currentShip.shipName}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
 
-                    .rotate(90f)
+                    //
                     //.width(34.dp)
-                    .height((34*ships.last().shipLength).dp)
-                    .absoluteOffset((currentShip.startPosition.row)    .dp,
-                                    (currentShip.startPosition.column) .dp
+                    .height((34*currentShip.shipLength).dp)
+                    .absoluteOffset((34 * currentShip.startPosition2.value.column+
+                            (17*(currentShip.shipLength))-5 )
+                        .dp,
+                                    (currentShip.startPosition2.value.row* 34
+                                            - (17*(currentShip.shipLength-1)))
+                                        .dp
                     )
+                    .rotate(90f)
 
                 //.width(34.dp)
             )
@@ -119,6 +134,9 @@ class Cell () {
 
     }
 
+    fun rotateImage() {
+        
+    }
 
 }
 
@@ -155,13 +173,6 @@ class Grid () {
                                     }
                                 }
                                 )
-                                if (currentCell.ships.size >0){
-                                    if (i == currentCell.ships.last().startPosition.row &&
-                                        j == currentCell.ships.last().startPosition.column){
-                                        Log.d("test", "Trying to print a ship msg")
-                                        //currentCell.DrawImage()
-                                    }
-                                }
                             }
 
 
@@ -177,9 +188,10 @@ class Grid () {
                 for(j in 0 until 10) {
                     val currentCell: Cell = gridArray[i][j]
                     if (currentCell.ships.size >0){
-                        if (i == currentCell.ships.last().startPosition.row &&
-                            j == currentCell.ships.last().startPosition.column){
-                            Log.d("test", "Trying to print a ship msg")
+                        if (i == currentCell.ships.last().startPosition2.value.row &&
+                            j == currentCell.ships.last().startPosition2.value.column){
+                            Log.d("test", "Trying to print {${currentCell.ships.last().shipName}")
+                            Log.d("test", "The ship position is " + i + " "+ j +" position")
                             currentCell.DrawImage()
                         }
                     }
@@ -196,39 +208,48 @@ class Grid () {
             gridArray[0][i].reassignColor()
 
         }
-        gridArray[0][0].ships.first().startPosition = Position(0,0)
+        gridArray[0][0].ships.last().startPosition2.value = Position(0,0)
         for (i in 6 until 10) {
             gridArray[0][i].assignShip(battleShips[3], 0, i)
             gridArray[0][i].reassignColor()
         }
-        gridArray[0][6].ships.first().startPosition = Position(0,6)
+        gridArray[0][6].ships.last().startPosition2.value = Position(0,6)
         for (i in 0 until 3) {
             gridArray[1][i].assignShip(battleShips[2], 1, i)
             gridArray[1][i].reassignColor()
         }
-        gridArray[1][0].ships.first().startPosition = Position(1,0)
+        gridArray[1][0].ships.last().startPosition2.value = Position(1,0)
         for (i in 4 until 6) {
             gridArray[1][i].assignShip(battleShips[1], 1, i)
             gridArray[1][i].reassignColor()
         }
-        gridArray[1][4].ships.first().startPosition = Position(1,4)
+        gridArray[1][4].ships.last().startPosition2.value = Position(1,4)
 
         gridArray[1][7].assignShip(battleShips[0], 1, 7)
-        gridArray[1][7].ships.first().startPosition = Position(1,7)
+        gridArray[1][7].ships.last().startPosition2.value = Position(1,7)
         gridArray[1][7].reassignColor()
 
 
     }
 
     fun replaceShip( ship: Ships, newX: Int, newY: Int) {
-
-        for (i in 0 until ship.shipLength) {
-            gridArray[ship.startPosition.row][ship.startPosition.column+i].removeShip()
-            gridArray[newY][newX+i].assignShip(ship, newX+i, (newY))
-            gridArray[newY][newX+i].reassignColor()
-            Log.d("test", (newX+i).toString())
+        Log.d ("test", "The old starting position of the ship is " + ship.startPosition2.value)
+        var adjustment = 0
+        if (newX + ship.shipLength > 10){
+            adjustment = newX + ship.shipLength - 10
         }
-        gridArray[newY][newX].ships.first().startPosition = Position(newX,newY)
+        for (i in 0 until ship.shipLength) {
+            Log.d ("test", "Replacing the " + i + " part of the ship")
+            gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column+i].removeShip()
+            gridArray[newY][newX+i- adjustment].assignShip(ship, newX+i- adjustment, (newY))
+
+            gridArray[newY][newX+i- adjustment].reassignColor()
+        }
+        gridArray[newY][newX].ships.last().startPosition2.value = Position(newY,newX- adjustment)
+        Log.d("test", "Reassigning the starting position of ${ship.shipName}" )
+
+
+
     }
 
 
