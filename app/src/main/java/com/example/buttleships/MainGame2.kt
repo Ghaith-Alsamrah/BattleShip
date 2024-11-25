@@ -67,16 +67,23 @@ val battleShips = arrayOf(
 class Cell () {
     var ships: MutableList<Ships> = mutableListOf()
     var currentColor by mutableStateOf(selectColor())
+    var isReady2 : Boolean = false
     fun selectColor () :Color {
-        if (ships.isEmpty()) {
+        val result = !(isReady2?: false)
+        if (result) {
+            if (ships.isEmpty()) {
+                return Color.Transparent
+            }
+            else if (ships.size > 1) {
+                return Color.Red
+            }
+            else {
+                return Color.Green
+            }
+        }else{
             return Color.Transparent
         }
-        else if (ships.size > 1) {
-            return Color.Red
-        }
-        else {
-            return Color.Green
-        }
+
     }
 
     fun assignShip (theShip: Ships, x : Int, y : Int ) {
@@ -85,6 +92,7 @@ class Cell () {
 
     }
     fun reassignColor() {
+
         this.currentColor = selectColor()
     }
     fun removeShip () {
@@ -103,10 +111,14 @@ class Cell () {
 
         }
     }
-
+//new it company name
     @Composable
-    fun DrawImage(){
-        val currentShip = ships.last()
+    fun DrawImage(ship: Ships?){
+    var currentShip = ships.last()
+        if (ship != null ) {
+            currentShip = ship
+        }
+
         var offsetXAdjustment = 0
 
         if (currentShip.imageRotation.value<1){
@@ -148,6 +160,7 @@ class Cell () {
 class Grid () {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState <Ships?> = mutableStateOf(null)
+    var isReady : MutableState <Boolean> = mutableStateOf(false)
 
     @SuppressLint("SuspiciousIndentation")
     @Composable
@@ -155,7 +168,7 @@ class Grid () {
         Box(modifier = Modifier
             .fillMaxSize()) {
             Box(modifier = Modifier
-                .size(380.dp)
+                //.size(380.dp)
                 .align(Alignment.TopCenter)) {
                 Column(
                     modifier = Modifier
@@ -169,20 +182,22 @@ class Grid () {
                                 val currentCell: Cell = gridArray[i][j]
                                 Box(modifier = Modifier
                                     .size(34.dp)
-
                                 )
                                 {
                                     currentCell.DrawBox(onClick = {
-                                        if (selectedShip.value != null) {
-                                            if (selectedShip.value!!.imageRotation.value >0){
-                                                replaceShip(selectedShip.value!!, j,i)
-                                            }else{
-                                                replaceShipRotated(selectedShip.value!!, j, i)
+                                        if (!isReady.value){
+                                            if (selectedShip.value != null) {
+                                                if (selectedShip.value!!.imageRotation.value >0){
+                                                    replaceShip(selectedShip.value!!, j,i)
+                                                }else{
+                                                    replaceShipRotated(selectedShip.value!!, j, i)
+                                                }
+                                                selectedShip.value = null
+                                            }else if (!currentCell.ships.isEmpty()) {
+                                                selectedShip.value = currentCell.ships.last()
                                             }
-                                            selectedShip.value = null
-                                        }else if (!currentCell.ships.isEmpty()) {
-                                            selectedShip.value = currentCell.ships.first()
                                         }
+
                                     }
                                     )
                                 }
@@ -196,18 +211,9 @@ class Grid () {
                     }
 
                 }
-                for (i in 0 until 10){
-                    for(j in 0 until 10) {
-                        val currentCell: Cell = gridArray[i][j]
-                        if (currentCell.ships.size >0){
-                            if (i == currentCell.ships.last().startPosition2.value.row &&
-                                j == currentCell.ships.last().startPosition2.value.column){
-                                Log.d("test", "Trying to print {${currentCell.ships.last().shipName}")
-                                Log.d("test", "The ship position is " + i + " "+ j +" position")
-                                currentCell.DrawImage()
-                            }
-                        }
-                    }
+                for (ship in battleShips){
+                    val currentCell = gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
+                    currentCell.DrawImage(ship)
                 }
             }
             if (selectedShip.value!= null){
@@ -220,7 +226,25 @@ class Grid () {
                             .align(Alignment.BottomStart)
                             .padding(30.dp)) { Text("Rotate") }
                 }
+            if (!isReady.value) {
+                Button(onClick = {
+                    var ready = true
+
+                    for (i in 0 until 9){
+                        for(j in 0 until 9) {
+                            if (gridArray[i][j].ships.size > 1){
+                                gridArray[i][j].isReady2 = false
+                            }
+                        }
+                    }
+
+
+                    isReady2(ready)
+                })
+                {Text("Confirm")}
             }
+            }
+
 
 
 
@@ -352,6 +376,18 @@ class Grid () {
         Log.d("test", "Reassigning the starting position of ${ship.shipName}" )
     }
 
+    fun isReady2 (ready : Boolean) {
+
+        if (ready) {
+            for (i in 0 until 10){
+                for (j in 0 until 10) {
+                    gridArray[i][j].isReady2 = true
+                    gridArray[i][j].reassignColor()
+                }
+            }
+        }
+        this.isReady.value = ready
+    }
 
 
 
