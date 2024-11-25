@@ -237,10 +237,11 @@ class Grid () {
                             }
                         }
                     }
-
-
                     isReady2(ready)
-                })
+                },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(30.dp))
                 {Text("Confirm")}
             }
             }
