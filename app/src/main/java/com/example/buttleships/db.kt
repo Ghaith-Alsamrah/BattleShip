@@ -12,15 +12,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.UUID
 
 class dataBase : ViewModel() {
-    var db: FirebaseFirestore? = Firebase.firestore
+    var db = Firebase.firestore
     var localPlayerId = mutableStateOf<String?>(null)
     val playerList = MutableStateFlow<Map<String, player>>(emptyMap())
     val gameMap = MutableStateFlow<Map<String, game>>(emptyMap())
 
 
     fun listentoPlayer() {
-            db?.collection("players") // this players sould be the same as the collection name in firebase
-                ?.addSnapshotListener { value, error ->
+            db.collection("players") // this players sould be the same as the collection name in firebase
+                .addSnapshotListener { value, error ->
                     if (error != null) {
                         return@addSnapshotListener
                     }
@@ -38,8 +38,8 @@ class dataBase : ViewModel() {
 
     fun listentoGame(){
         // Listen for games
-        db?.collection("games")
-            ?.addSnapshotListener { value, error ->
+        db.collection("games")
+            .addSnapshotListener { value, error ->
                 if (error != null) {
                     return@addSnapshotListener
                 }
@@ -54,22 +54,23 @@ class dataBase : ViewModel() {
 
     fun makeNewPlaye(name: String) {
         val newPlayer = player(name = name)
-        db?.collection("players")
-            ?.add(newPlayer)
-            ?.addOnSuccessListener { documentReference ->
+        db.collection("players")
+            .add(newPlayer)
+            .addOnSuccessListener { documentReference ->
                 val playerId = documentReference.id
                 localPlayerId.value = playerId
             }
     }
 
     fun UpdatGame(gameId: String){
-        db?.collection("games")?.document(gameId)
-            ?.update("gameState", "player1_turn")
+        db.collection("games")
+            .document(gameId)
+            .update("gameState", "player1_turn")
 
     }
     fun deleteOfflinePlayers() {
-        val query = db?.collection("players")?.whereEqualTo("status", "offline")
-        query?.get()?.addOnSuccessListener { querySnapshot ->
+        val query = db.collection("players").whereEqualTo("status", "offline")
+        query.get().addOnSuccessListener { querySnapshot ->
             for (document in querySnapshot) {
                 document.reference.delete()
                     .addOnSuccessListener {
@@ -81,7 +82,7 @@ class dataBase : ViewModel() {
                         println("Error deleting document: $e")
                     }
             }
-        }?.addOnFailureListener { e ->
+        }.addOnFailureListener { e ->
             // Handle failure in fetching documents
             println("Error fetching documents: $e")
         }

@@ -54,8 +54,8 @@ fun lobby(navController : NavController, dataBase: dataBase) {
 
     LaunchedEffect(games) {
         games.forEach { (gameId, game) ->
-            // TODO: Popup with accept invite?
-            if ((game.player1Id == dataBase.localPlayerId.value || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
+            if ((game.player1Id == dataBase.localPlayerId.value
+                        || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
                 navController.navigate(nav.mainGame)
             }
         }
@@ -155,7 +155,7 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                                 modifier = Modifier.padding(end = 10.dp)
                                             ) {
                                                 Text(
-                                                    "Invite",
+                                                    "accept Invite",
                                                     fontWeight = FontWeight.ExtraBold,
                                                     color = Color.White,
                                                     fontSize = 16.sp
@@ -165,12 +165,11 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                         }
                                     }
 
-
                                     if (!hasGame) {
-                                        Button(
+                                        TextButton(
                                             onClick = {
-                                                dataBase.db?.collection("games")
-                                                    ?.add(
+                                                dataBase.db.collection("games")
+                                                    .add(
                                                         game(
                                                             gameState = "invite",
                                                             player1Id = dataBase.localPlayerId.value!!,
@@ -178,13 +177,14 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                                         )
                                                     )
                                             },
-                                            colors = buttonColors(
-                                                // Changes the color of the button
-                                                containerColor = Color.Red,
-                                            ),
-                                            modifier = Modifier.padding(20.dp)
+                                            modifier = Modifier.padding(10.dp)
                                         ) {
-                                            Text("Play", color = Color.White)
+                                            Text(
+                                                "Invite",
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.White,
+                                                fontSize = 16.sp
+                                            )
                                         }
                                     }
                                 }

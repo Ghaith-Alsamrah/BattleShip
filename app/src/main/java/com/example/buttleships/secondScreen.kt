@@ -49,7 +49,6 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
             navController.navigate("lobby")
         }
     }
-    
     if (dataBase.localPlayerId.value == null) {
         var name by remember{ mutableStateOf("") }
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -89,9 +88,18 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
                     Button(
                         onClick = {
                             if(name.isNotBlank()) {
-                                dataBase.makeNewPlaye(name)
-                                sharedPreferences.edit().putString("playerId", dataBase.localPlayerId.value).apply()
-                                navController.navigate(nav.lobby)
+                                val newPlayer = player(name = name)
+                                dataBase.db.collection("players")
+                                    .add(newPlayer)
+                                    .addOnSuccessListener { documentRef ->
+                                        val playerId = documentRef.id
+
+                                        sharedPreferences.edit().putString("playerId", playerId).apply()
+
+                                        dataBase.localPlayerId.value = playerId
+
+                                        navController.navigate(nav.lobby)
+                                    }
                             }
                                   },
                         colors = buttonColors( // this will make the button it self red
