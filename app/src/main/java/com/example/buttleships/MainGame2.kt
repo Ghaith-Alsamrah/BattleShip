@@ -35,8 +35,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.asStateFlow
 
 
 data class Position (val row: Int, val column: Int)
@@ -246,6 +249,9 @@ class Grid () {
                         }
                     }
                     isReady2(ready)
+                  //  if (ready){
+
+                    //}
                 },
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -276,29 +282,28 @@ class Grid () {
     fun rotateimage2(ship:Ships, x:Int, y:Int) {
         var adjustmentX = 0
         var adjustmentY = 0
-        if (y + ship.shipLength > 8){
-            adjustmentY = y + ship.shipLength - 9
+        if (y + ship.shipLength > 9){
+            adjustmentY = y + ship.shipLength - 10
 
         }
-        if (x + ship.shipLength > 8) {
-            adjustmentX = x + ship.shipLength - 9
+        if (x + ship.shipLength > 9) {
+            adjustmentX = x + ship.shipLength - 10
         }
         for (i in 0 until ship.shipLength) {
             if (ship.imageRotation.value < 1) {
                 gridArray[x][y+i].removeShip()
-                gridArray[x + i - adjustmentX][y]
-                    .assignShip(ship, x + i - adjustmentX, (y))
+                gridArray[x + i - adjustmentX][y].assignShip(ship, x + i - adjustmentX, (y))
                 gridArray[x + i - adjustmentX][y].reassignColor()
-            }else{
+            }
+            else{
                 gridArray[x+i][y].removeShip()
-                gridArray[x][y+i - adjustmentY]
-                    .assignShip(ship, x , (y+i - adjustmentY))
-                gridArray[x  ][y + i - adjustmentY].reassignColor()
+                gridArray[x][y+i - adjustmentY].assignShip(ship, x , (y+i - adjustmentY))
+                gridArray[x][y + i - adjustmentY].reassignColor()
             }
         }
-        gridArray[x - adjustmentX][y - adjustmentY].ships.last().startPosition2.value =
-            Position(x - adjustmentX,y - adjustmentY )
+        gridArray[x - adjustmentX][y - adjustmentY].ships.last().startPosition2.value = Position(x - adjustmentX,y - adjustmentY )
     }
+
     fun startingPosition() {
         for (i in 0 until 5) {
             gridArray[0][i].assignShip(battleShips[4], 0, i)
@@ -329,8 +334,10 @@ class Grid () {
 
     }
 
+
     fun replaceShip( ship: Ships, newX: Int, newY: Int) {
         Log.d ("test", "The old starting position of the ship is " + ship.startPosition2.value)
+
         var adjustment = 0
         if (newX + ship.shipLength > 10){
             adjustment = newX + ship.shipLength - 10
@@ -339,7 +346,7 @@ class Grid () {
 
             Log.d ("test", "Replacing the " + i + " part of the ship")
             gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column+i].removeShip()
-            gridArray[newY][newX+i- adjustment].assignShip(ship, newX+i- adjustment, (newY))
+            gridArray[newY][newX+i- adjustment].assignShip(ship, newX+i- adjustment, newY)
             gridArray[newY][newX+i- adjustment].reassignColor()
         }
         gridArray[newY][newX].ships.last().startPosition2.value = Position(newY,newX- adjustment)
@@ -351,8 +358,8 @@ class Grid () {
         Log.d ("test", "The old starting position of the ship is " + ship.startPosition2.value)
         var currentShip = selectedShip.value!!
         var adjustment = 0
-        if (newY + ship.shipLength > 9){
-            adjustment = newY + ship.shipLength - 9
+        if (newY + ship.shipLength > 10){
+            adjustment = newY + ship.shipLength - 10
         }
         for (i in 0 until ship.shipLength) {
 
@@ -379,24 +386,60 @@ class Grid () {
         }
         this.isReady.value = ready
     }
-
-
-
 }
 
 @Composable
-fun MainGame2(navController: NavController) {
-    Scaffold  {innerPadding ->
-        Box (modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()
-            .background(Color(0xFF4287F5))
-        )
-        {
-            val grid = Grid()
-            grid.startingPosition()
-            grid.DrawGrid(grid.gridArray)
-        }
+fun MainGame2(navController: NavController, dataBase: dataBase, gameId: String?) {
+    val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
+    val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
 
+    if (gameId != null && games.containsKey(gameId)) {
+        Scaffold { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .background(Color(0xFF4287F5))
+            )
+            {
+                Box(
+                    modifier = Modifier
+                        .size(
+                            width = 380.dp,
+                            height = 400.dp
+                        )
+                        .padding(20.dp)
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .align(Alignment.TopCenter)
+                ) {
+                    Text(
+                        text = "Name: ",
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp),
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Score: 0-0",
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 20.dp),
+                        color = Color.White,
+
+                        )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                    ) {
+                        val grid = Grid()
+                        grid.startingPosition()
+                        grid.DrawGrid(grid.gridArray)
+                    }
+                }
+            }
+
+        }
     }
 }

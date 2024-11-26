@@ -48,15 +48,6 @@ data class game(
     var player2Id: String = ""
 )
 
-data class ShipType (
-    val length: Int,
-    val shipName: String,
-    var rotationState : Float = 0f,
-    var isShipSelectedState: Boolean = false,
-    var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
-    var centerOfImageState: Offset = Offset (0f,0f)
-)
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +58,7 @@ class MainActivity : ComponentActivity() {
                 dataBase.listentoPlayer()
                 dataBase.listentoGame()
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "firstScreen" , builder = {
+                NavHost(navController = navController, startDestination = nav.firstScreen , builder = {
                     composable(nav.firstScreen) {
                         firstScreen(navController = navController)
                     }
@@ -77,8 +68,9 @@ class MainActivity : ComponentActivity() {
                     composable(nav.lobby) {
                         lobby(navController = navController, dataBase)
                     }
-                    composable (nav.mainGame) {
-                        MainGame2(navController = navController)
+                    composable (nav.mainGame) { backStackEntry ->
+                        val gameId = backStackEntry.arguments?.getString("gameId")
+                        MainGame2(navController = navController, dataBase, gameId)
                     }
                 })
 

@@ -56,7 +56,7 @@ fun lobby(navController : NavController, dataBase: dataBase) {
         games.forEach { (gameId, game) ->
             if ((game.player1Id == dataBase.localPlayerId.value
                         || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
-                navController.navigate(nav.mainGame)
+                navController.navigate(nav.mainGame + "/${gameId}")
             }
         }
     }
@@ -139,18 +139,23 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                             && game.gameState == "invite"
                                         ) {
                                             Text(
-                                                "waiting for invite",
+                                                "waiting for accept",
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = Color.White,
                                                 fontSize = 16.sp
                                             )
+                                            hasGame = true
                                         } else if (game.player2Id == dataBase.localPlayerId.value
                                             && game.gameState == "invite"
                                         ) {
                                             TextButton(
                                                 onClick = {
-                                                    dataBase.UpdatGame(gameId)
-                                                    navController.navigate(nav.mainGame)
+                                                    dataBase.db.collection("games")
+                                                        .document(gameId)
+                                                        .update("gameState", "player1_turn")
+                                                        .addOnSuccessListener {
+                                                            navController.navigate(nav.mainGame + "/${gameId}")
+                                                        }
                                                 },
                                                 modifier = Modifier.padding(end = 10.dp)
                                             ) {
@@ -176,6 +181,9 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                                             player2Id = documentId
                                                         )
                                                     )
+                                                    .addOnSuccessListener { documentRef ->
+                                                        // TODO: Navigate?
+                                                    }
                                             },
                                             modifier = Modifier.padding(10.dp)
                                         ) {

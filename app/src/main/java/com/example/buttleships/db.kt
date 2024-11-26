@@ -66,8 +66,13 @@ class dataBase : ViewModel() {
         db.collection("games")
             .document(gameId)
             .update("gameState", "player1_turn")
+            .addOnSuccessListener {
+
+            }
 
     }
+
+
     fun deleteOfflinePlayers() {
         val query = db.collection("players").whereEqualTo("status", "offline")
         query.get().addOnSuccessListener { querySnapshot ->
