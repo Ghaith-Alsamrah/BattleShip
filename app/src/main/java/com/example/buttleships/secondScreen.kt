@@ -49,6 +49,7 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
             navController.navigate("lobby")
         }
     }
+    
     if (dataBase.localPlayerId.value == null) {
         var name by remember{ mutableStateOf("") }
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
