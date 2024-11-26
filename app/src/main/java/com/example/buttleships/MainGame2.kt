@@ -40,6 +40,7 @@ import androidx.navigation.NavController
 
 
 data class Position (val row: Int, val column: Int)
+
 class Ships (name: String, length: Int, shipImage: Int, shipRotatedImage: Int) {
     val shipName: String = name
     val shipLength : Int = length
@@ -47,7 +48,7 @@ class Ships (name: String, length: Int, shipImage: Int, shipRotatedImage: Int) {
     var isSelected: Boolean = false
     var position: Position = Position(0,0)
     var startPosition2: MutableState<Position> =  (mutableStateOf(Position(0,0)) )
-    var startPosition: Position = Position(0,0)
+    //var startPosition: Position = Position(0,0)
     val image: Int =  shipImage
     var imageRotation : MutableState<Float> = (mutableStateOf(90f))
 }
@@ -64,10 +65,13 @@ val battleShips = arrayOf(
     Ships ("1x5", 5, R.drawable.ship3x1copy,
         shipRotatedImage = R.drawable.ship3x1rotated),
 )
+
 class Cell () {
     var ships: MutableList<Ships> = mutableListOf()
     var currentColor by mutableStateOf(selectColor())
     var isReady2 : Boolean = false
+
+
     fun selectColor () :Color {
         val result = !(isReady2?: false)
         if (result) {
@@ -91,14 +95,19 @@ class Cell () {
         this.ships.add(theShip)
 
     }
-    fun reassignColor() {
 
+
+    fun reassignColor() {
         this.currentColor = selectColor()
     }
+
+
     fun removeShip () {
         this.ships.remove(this.ships.last())
         reassignColor()
     }
+
+
     @Composable
     fun DrawBox (onClick: () -> Unit = {}) {
         Box (modifier = Modifier
@@ -111,7 +120,9 @@ class Cell () {
 
         }
     }
-//new it company name
+
+
+    @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawImage(ship: Ships?){
     var currentShip = ships.last()
@@ -124,8 +135,9 @@ class Cell () {
         if (currentShip.imageRotation.value<1){
             offsetXAdjustment = 17 * (currentShip.shipLength - 1 )
         }
+
         //currentShip.isRotated = true
-        Log.d("test", currentShip.startPosition.toString())
+        //Log.d("test", currentShip.startPosition.toString())
         Box (modifier = Modifier.fillMaxSize()
             .padding(20.dp)
             .padding(bottom = 40.dp)){
@@ -139,8 +151,7 @@ class Cell () {
                     //.width(34.dp)
                     .height((34*currentShip.shipLength).dp)
                     .absoluteOffset((34 * currentShip.startPosition2.value.column+
-                            (17*(currentShip.shipLength))-5 - offsetXAdjustment)
-                        .dp,
+                            (17*(currentShip.shipLength))-5 - offsetXAdjustment).dp,
                                     (currentShip.startPosition2.value.row* 34
                                             - (17*(currentShip.shipLength-1)) + offsetXAdjustment)
                                         .dp
@@ -152,8 +163,6 @@ class Cell () {
         }
 
     }
-
-
 
 }
 
@@ -209,7 +218,6 @@ class Grid () {
                         }
 
                     }
-
                 }
                 for (ship in battleShips){
                     val currentCell = gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
@@ -233,7 +241,7 @@ class Grid () {
                     for (i in 0 until 9){
                         for(j in 0 until 9) {
                             if (gridArray[i][j].ships.size > 1){
-                                gridArray[i][j].isReady2 = false
+                                ready = false
                             }
                         }
                     }
@@ -256,38 +264,20 @@ class Grid () {
         currentShip.imageRotation.value = (currentShip.imageRotation.value + 90f)%180
 
         //replaceShip(currentShip, currentShip.startPosition2.value.column, currentShip.startPosition2.value.row)
-        if (currentShip.imageRotation.value > 0) {
+
             rotateimage2(
                 currentShip,
                 currentShip.startPosition2.value.row,
                 currentShip.startPosition2.value.column
             )
-        }
-        else {
-            rotateimage2(
-                currentShip,
-                currentShip.startPosition2.value.row,
-                currentShip.startPosition2.value.column
-            )
-        }
-        /*
-        for (i in 0 until currentShip.shipLength) {
 
-            Log.d ("test", "Replacing the " + i + " part of the ship")
-            gridArray[currentShip.startPosition2.value.row][currentShip.startPosition2.value.column+i].removeShip()
-            gridArray[currentShip.startPosition2.value.row + i][currentShip.startPosition2.value.column]
-                .assignShip(selectedShip.value!!, currentShip.startPosition2.value.column + i , (currentShip.startPosition2.value.row))
-            gridArray[currentShip.startPosition2.value.row + i][currentShip.startPosition2.value.column].reassignColor()
-        }
-
-         */
     }
 
     fun rotateimage2(ship:Ships, x:Int, y:Int) {
         var adjustmentX = 0
         var adjustmentY = 0
-        if (y + ship.shipLength > 9){
-            adjustmentY = y + ship.shipLength - 10
+        if (y + ship.shipLength > 8){
+            adjustmentY = y + ship.shipLength - 9
 
         }
         if (x + ship.shipLength > 8) {
