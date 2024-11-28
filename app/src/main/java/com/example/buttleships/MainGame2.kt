@@ -219,8 +219,7 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
                                             }
                                         }
 
-                                    }
-                                    )
+                                    })
                                 }
 
 
@@ -260,18 +259,21 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
                                 }
                             }
                         }
-
+                        if (ready) {
                         games.forEach { (gameId, game) ->
-                            if (ready) {
-                                dataBase.db.collection("players")
-                                    .document(game.player1Id)
-                                    .update("ready", ready)
+
+                                if (game.player1Id == dataBase.localPlayerId.value) {
+                                    dataBase.db.collection("players")
+                                        .document(game.player1Id)
+                                        .update("ready", ready)
+                                }
+                                else if(game.player2Id == dataBase.localPlayerId.value) {
+                                    dataBase.db.collection("players")
+                                        .document(game.player2Id)
+                                        .update("ready", ready)
+                                }
                             }
-                            if (ready) {
-                                dataBase.db.collection("players")
-                                    .document(game.player2Id)
-                                    .update("ready", ready)
-                            }
+
                         }
                         isReady2(ready)
 
@@ -407,7 +409,6 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
         }
 
         games.forEach { (gameId, game) ->
-            if (game.player1Id == dataBase.localPlayerId.value) {
                 Log.d("sss", "${ready}")
 
                 Log.d("sss", "${this.isReady.value}")
@@ -418,13 +419,11 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
                                 shipLocation.add(i.toString() + j.toString())
                                 Log.d("shipp", "1")
 
-                            }
+
                         }
                     }
                 }
             }
-
-            if (game.player2Id == dataBase.localPlayerId.value) {
                 if (players[games[gameId]!!.player2Id]!!.ready){
                     for (i in 0 until 10) {
                         for (j in 0 until 10) {
@@ -432,18 +431,25 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
                                 shipLocation1.add(i.toString() + j.toString())
                                 Log.d("shipp", "2")
 
-                            }
+
                         }
                     }
                 }
             }
-            dataBase.db.collection("games")
-                .document(gameId)
-                .update("player1ships", shipLocation)
-
-            dataBase.db.collection("games")
-                .document(gameId)
-                .update("player2ships", shipLocation1)
+            if (players[games[gameId]!!.player1Id]!!.ready) {
+                if (game.player1Id == dataBase.localPlayerId.value) {
+                    dataBase.db.collection("games")
+                        .document(gameId)
+                        .update("player1ships", shipLocation)
+                }
+            }
+            if (players[games[gameId]!!.player2Id]!!.ready){
+                if (game.player1Id == dataBase.localPlayerId.value) {
+                    dataBase.db.collection("games")
+                        .document(gameId)
+                        .update("player2ships", shipLocation1)
+                }
+            }
         }
 
 
