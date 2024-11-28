@@ -31,30 +31,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.buttleships.nav.mainGame
 import com.example.buttleships.ui.theme.ButtleshipsTheme
 
 data class player(
     var name: String = "",
+    var ready: Boolean = false,
 )
 
 data class game(
-    var gameBoard: List<Boolean> = List(100) {false},
-    var player1ships: List<Boolean> = List(5) {false},
-    var player2ships: List<Boolean> = List(5) {false},
-    var clickBoard: List<Boolean> = List(100) {false},
+    var player1ships: List<String> = listOf(""),
+    var player2ships: List<String> = listOf(""),
     var gameState: String = "invite",
     var player1Id: String = "",
     var player2Id: String = ""
-)
-
-data class ShipType (
-    val length: Int,
-    val shipName: String,
-    var rotationState : Float = 0f,
-    var isShipSelectedState: Boolean = false,
-    var offsetState: MutableState<Offset> = mutableStateOf(Offset(0f, 0f)),
-    var centerOfImageState: Offset = Offset (0f,0f)
 )
 
 class MainActivity : ComponentActivity() {
@@ -67,7 +56,7 @@ class MainActivity : ComponentActivity() {
                 dataBase.listentoPlayer()
                 dataBase.listentoGame()
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "firstScreen" , builder = {
+                NavHost(navController = navController, startDestination = nav.firstScreen , builder = {
                     composable(nav.firstScreen) {
                         firstScreen(navController = navController)
                     }
@@ -77,8 +66,9 @@ class MainActivity : ComponentActivity() {
                     composable(nav.lobby) {
                         lobby(navController = navController, dataBase)
                     }
-                    composable (nav.mainGame) {
-                        MainGame2(navController = navController)
+                    composable ("mainGame/{gameId}"){ backStackEntry ->
+                        val gameId = backStackEntry.arguments?.getString("gameId")
+                        MainGame2(navController = navController, dataBase, gameId)
                     }
                 })
 
@@ -88,6 +78,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+
+
 
 
 

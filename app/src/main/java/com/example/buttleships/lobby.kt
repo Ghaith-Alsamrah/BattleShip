@@ -54,9 +54,9 @@ fun lobby(navController : NavController, dataBase: dataBase) {
 
     LaunchedEffect(games) {
         games.forEach { (gameId, game) ->
-            // TODO: Popup with accept invite?
-            if ((game.player1Id == dataBase.localPlayerId.value || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
-                navController.navigate(nav.mainGame)
+            if ((game.player1Id == dataBase.localPlayerId.value
+                        || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
+                navController.navigate( "mainGame/${gameId}")
             }
         }
     }
@@ -113,12 +113,8 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = 15.dp)
-                                        .clickable {
-                                            navController.navigate("mainGame")
-                                        },
+                                        .padding(start = 15.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-
                                     ) {
 
                                     // Black circle/point
@@ -139,52 +135,60 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                             && game.gameState == "invite"
                                         ) {
                                             Text(
-                                                "waiting for invite",
+                                                "waiting for accept",
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = Color.White,
                                                 fontSize = 16.sp
                                             )
+                                            hasGame = true
                                         } else if (game.player2Id == dataBase.localPlayerId.value
                                             && game.gameState == "invite"
                                         ) {
                                             TextButton(
                                                 onClick = {
-                                                    dataBase.UpdatGame(gameId)
-                                                    navController.navigate(nav.mainGame)
+                                                    dataBase.db.collection("games")
+                                                        .document(gameId)
+                                                        .update("gameState", "player1_turn")
+                                                        .addOnSuccessListener {
+                                                            navController.navigate( "mainGame/${gameId}")
+                                                        }
                                                 },
                                                 modifier = Modifier.padding(end = 10.dp)
                                             ) {
                                                 Text(
-                                                    "Invite",
+                                                    "accept Invite",
                                                     fontWeight = FontWeight.ExtraBold,
                                                     color = Color.White,
                                                     fontSize = 16.sp
                                                 )
-                                                hasGame = true
                                             }
+                                            hasGame = true
                                         }
                                     }
 
-
                                     if (!hasGame) {
-                                        Button(
+                                        TextButton(
                                             onClick = {
-                                                dataBase.db?.collection("games")
-                                                    ?.add(
+                                                dataBase.db.collection("games")
+                                                    .add(
                                                         game(
                                                             gameState = "invite",
                                                             player1Id = dataBase.localPlayerId.value!!,
                                                             player2Id = documentId
                                                         )
                                                     )
+                                                    .addOnSuccessListener { documentRef ->
+                                                        // TODO: Navigate?
+                                                    }
                                             },
-                                            colors = buttonColors(
-                                                // Changes the color of the button
-                                                containerColor = Color.Red,
-                                            ),
-                                            modifier = Modifier.padding(20.dp)
+                                            modifier = Modifier.padding(10.dp)
                                         ) {
-                                            Text("Play", color = Color.White)
+                                            Text(
+                                                "Invite",
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.White,
+                                                fontSize = 16.sp
+                                            )
                                         }
                                     }
                                 }
