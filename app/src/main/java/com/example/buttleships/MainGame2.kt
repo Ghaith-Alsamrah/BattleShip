@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 
@@ -169,19 +171,24 @@ class Cell () {
 
 }
 
-class Grid () {
+data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val games : Map<String, game>) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState <Ships?> = mutableStateOf(null)
     var isReady : MutableState <Boolean> = mutableStateOf(false)
+    var shipLocation : MutableList<String> = mutableListOf("")
+
+
 
     @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawGrid(gridArray: Array<Array<Cell>>) {
         Box(modifier = Modifier
             .fillMaxSize()) {
-            Box(modifier = Modifier
-                //.size(380.dp)
-                .align(Alignment.TopCenter)) {
+            Box(
+                modifier = Modifier
+                    //.size(380.dp)
+                    .align(Alignment.TopCenter)
+            ) {
                 Column(
                     modifier = Modifier
                         .padding(20.dp)
@@ -192,20 +199,21 @@ class Grid () {
                         Row {
                             for (j in 0 until 10) {
                                 val currentCell: Cell = gridArray[i][j]
-                                Box(modifier = Modifier
-                                    .size(34.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
                                 )
                                 {
                                     currentCell.DrawBox(onClick = {
-                                        if (!isReady.value){
+                                        if (!isReady.value) {
                                             if (selectedShip.value != null) {
-                                                if (selectedShip.value!!.imageRotation.value >0){
-                                                    replaceShip(selectedShip.value!!, j,i)
-                                                }else{
+                                                if (selectedShip.value!!.imageRotation.value > 0) {
+                                                    replaceShip(selectedShip.value!!, j, i)
+                                                } else {
                                                     replaceShipRotated(selectedShip.value!!, j, i)
                                                 }
                                                 selectedShip.value = null
-                                            }else if (!currentCell.ships.isEmpty()) {
+                                            } else if (!currentCell.ships.isEmpty()) {
                                                 selectedShip.value = currentCell.ships.last()
                                             }
                                         }
@@ -215,62 +223,61 @@ class Grid () {
                                 }
 
 
-
                             }
 
                         }
 
                     }
                 }
-                for (ship in battleShips){
-                    val currentCell = gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
+                for (ship in battleShips) {
+                    val currentCell =
+                        gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
                     currentCell.DrawImage(ship)
                 }
             }
-            if (selectedShip.value!= null){
-                    Button(onClick = {
+            if (selectedShip.value != null) {
+                Button(
+                    onClick = {
                         rotateImage()
                         selectedShip.value = null
 
                     },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(30.dp)) { Text("Rotate") }
-                }
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(top = 50.dp)
+                ) { Text("Rotate") }
+            }
             if (!isReady.value) {
-                Button(onClick = {
-                    var ready = true
+                Button(
+                    onClick = {
+                        var ready = true
 
-                    for (i in 0 until 9){
-                        for(j in 0 until 9) {
-                            if (gridArray[i][j].ships.size > 1){
-                                ready = false
+                        for (i in 0 until 9) {
+                            for (j in 0 until 9) {
+                                if (gridArray[i][j].ships.size > 1) {
+                                    ready = false
+                                }
                             }
                         }
-                    }
-                    isReady2(ready)
-                  //  if (ready){
+                        isReady2(ready)
+                        //  if (ready){
 
-                    //}
-                },
+                        //}
+                    },
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(30.dp))
-                {Text("Confirm")}
+                        .align(Alignment.BottomEnd)
+                        .padding(top = 50.dp)
+                )
+                { Text("Confirm") }
             }
-            }
-
-
-
+        }
 
     }
 
+    @SuppressLint("SuspiciousIndentation")
     fun rotateImage() {
-        var currentShip = selectedShip.value!!
+        val currentShip = selectedShip.value!!
         currentShip.imageRotation.value = (currentShip.imageRotation.value + 90f)%180
-
-        //replaceShip(currentShip, currentShip.startPosition2.value.column, currentShip.startPosition2.value.row)
-
             rotateimage2(
                 currentShip,
                 currentShip.startPosition2.value.row,
@@ -376,16 +383,66 @@ class Grid () {
 
     fun isReady2 (ready : Boolean) {
 
-        if (ready) {
-            for (i in 0 until 10){
-                for (j in 0 until 10) {
-                    gridArray[i][j].isReady2 = true
-                    gridArray[i][j].reassignColor()
+
+        games.forEach { (gameId, game) ->
+            if (players[games[gameId]!!.player1Id]!!.ready) {
+                if (game.player1Id == dataBase.localPlayerId.value) {
+                    Log.d("sss", "${ready}")
+
+                    Log.d("sss", "${this.isReady.value}")
+                    if (this.isReady.value) {
+                        for (i in 0 until 10) {
+                            for (j in 0 until 10) {
+                                if (gridArray[i][j].ships.isNotEmpty()) {
+                                    shipLocation.add(i.toString() + j.toString())
+
+                                    dataBase.db.collection("games")
+                                        .document(gameId)
+                                        .update("player1ships", shipLocation)
+
+                                    Log.d("shipp", "${shipLocation.last()}")
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (game.player2Id == dataBase.localPlayerId.value) {
+                    Log.d("sss", "${ready}")
+                    Log.d("sss", "${this.isReady.value}")
+                    if (this.isReady.value) {
+                        for (i in 0 until 10) {
+                            for (j in 0 until 10) {
+                                if (gridArray[i][j].ships.isNotEmpty()) {
+                                    shipLocation.add(i.toString() + j.toString())
+                                    dataBase.db.collection("games")
+                                        .document(gameId)
+                                        .update("player2ships", shipLocation)
+
+                                    Log.d("shipp", "${shipLocation.last()}")
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (ready) {
+                    for (i in 0 until 10) {
+                        for (j in 0 until 10) {
+                            gridArray[i][j].isReady2 = true
+                            gridArray[i][j].reassignColor()
+                        }
+                    }
+                    this.isReady.value = ready
                 }
             }
         }
-        this.isReady.value = ready
     }
+
+
+
 }
 
 @Composable
@@ -400,46 +457,72 @@ fun MainGame2(navController: NavController, dataBase: dataBase, gameId: String?)
                     .padding(innerPadding)
                     .fillMaxSize()
                     .background(Color(0xFF4287F5))
-            )
-            {
-                Box(
+            ) {
+                Column(
                     modifier = Modifier
-                        .size(
-                            width = 380.dp,
-                            height = 400.dp
-                        )
-                        .padding(20.dp)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .align(Alignment.TopCenter)
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.SpaceBetween // Space elements apart
                 ) {
-                    Text(
-                        text = "Name: ",
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 10.dp),
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Score: 0-0",
-                        textAlign = TextAlign.End,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 20.dp),
-                        color = Color.White,
-
-                        )
+                    // Top box
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .background(Color.Black.copy(alpha = 0.5f))
                     ) {
-                        val grid = Grid()
+                        games.forEach { (gameId, game) ->
+                            if (game.player1Id == dataBase.localPlayerId.value) {
+                                Text(
+                                    text = "Name: player1 ${players[games[gameId]!!.player1Id]!!.name} ",
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 10.dp),
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Score: 0-0",
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(end = 20.dp),
+                                    color = Color.White
+                                )
+                            }
+                            else {
+                                Text(
+                                    text = "Name: palyer2 ${players[games[gameId]!!.player2Id]!!.name} ",
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 10.dp),
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Score: 0-0",
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(end = 20.dp),
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+
+                    // Bottom box
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val grid = Grid(dataBase ,players, games)
                         grid.startingPosition()
                         grid.DrawGrid(grid.gridArray)
                     }
                 }
             }
-
         }
     }
 }

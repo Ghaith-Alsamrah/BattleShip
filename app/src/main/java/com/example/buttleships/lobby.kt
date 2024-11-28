@@ -56,7 +56,7 @@ fun lobby(navController : NavController, dataBase: dataBase) {
         games.forEach { (gameId, game) ->
             if ((game.player1Id == dataBase.localPlayerId.value
                         || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn") {
-                navController.navigate(nav.mainGame + "/${gameId}")
+                navController.navigate( "mainGame/${gameId}")
             }
         }
     }
@@ -113,12 +113,8 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = 15.dp)
-                                        .clickable {
-                                            navController.navigate("mainGame")
-                                        },
+                                        .padding(start = 15.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-
                                     ) {
 
                                     // Black circle/point
@@ -154,7 +150,7 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                                         .document(gameId)
                                                         .update("gameState", "player1_turn")
                                                         .addOnSuccessListener {
-                                                            navController.navigate(nav.mainGame + "/${gameId}")
+                                                            navController.navigate( "mainGame/${gameId}")
                                                         }
                                                 },
                                                 modifier = Modifier.padding(end = 10.dp)
@@ -165,8 +161,8 @@ fun lobby(navController : NavController, dataBase: dataBase) {
                                                     color = Color.White,
                                                     fontSize = 16.sp
                                                 )
-                                                hasGame = true
                                             }
+                                            hasGame = true
                                         }
                                     }
 

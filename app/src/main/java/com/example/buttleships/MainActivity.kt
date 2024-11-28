@@ -31,18 +31,16 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.buttleships.nav.mainGame
 import com.example.buttleships.ui.theme.ButtleshipsTheme
 
 data class player(
     var name: String = "",
+    var ready: Boolean = false,
 )
 
 data class game(
-    var gameBoard: List<Boolean> = List(100) {false},
-    var player1ships: List<Boolean> = List(5) {false},
-    var player2ships: List<Boolean> = List(5) {false},
-    var clickBoard: List<Boolean> = List(100) {false},
+    var player1ships: List<String> = listOf(""),
+    var player2ships: List<String> = listOf(""),
     var gameState: String = "invite",
     var player1Id: String = "",
     var player2Id: String = ""
@@ -68,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     composable(nav.lobby) {
                         lobby(navController = navController, dataBase)
                     }
-                    composable (nav.mainGame) { backStackEntry ->
+                    composable ("mainGame/{gameId}"){ backStackEntry ->
                         val gameId = backStackEntry.arguments?.getString("gameId")
                         MainGame2(navController = navController, dataBase, gameId)
                     }
@@ -80,6 +78,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+
+
 
 
 
