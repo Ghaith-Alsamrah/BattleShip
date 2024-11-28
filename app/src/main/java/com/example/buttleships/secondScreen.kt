@@ -38,13 +38,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.asStateFlow
 
-
+var itExists = false
 @Composable
 fun secondScreen (navController: NavController, dataBase: Database, isProcessing: IsProcessing) {
     //The offline information from storage with an ID of "BattleShipPrefs"
     val sharedPreferences = LocalContext.current.getSharedPreferences("BattleShipPrefs", Context.MODE_PRIVATE)
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf("") }
+
 
     // Check for playerId in SharedPreferences
     LaunchedEffect(Unit) {
@@ -97,7 +98,7 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
                     )
                     Button(
                         onClick = {
-                            if(name.isNotBlank() && !isProcessing.isProcessing2.value ) {
+                            if(name.isNotBlank() && !isProcessing.isProcessing2.value && !itExists) {
                                 isProcessing.isProcessing2.value = true
                                 val newPlayer = player(name = name)
                                 //Accesses the database collection that's called "players"
@@ -107,12 +108,15 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
                                     .addOnSuccessListener { documentRef ->
                                         val playerId = documentRef.id
 
+
                                         sharedPreferences.edit().putString("playerId", playerId).apply()
+                                        sharedPreferences.edit().putString("playerName", name).apply()
 
                                         dataBase.localPlayerId.value = playerId
 
                                         navController.navigate(nav.lobby)
                                         isProcessing.isProcessing2.value = false
+                                        itExists = true
                                     }
                             }
                                   },
@@ -128,14 +132,14 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
         }
     }
     else {
-        var itExists = false
+
         players.forEach{ player ->
             if (dataBase.localPlayerId.value == player.value.name){
                 itExists = true
             }
         }
         if (!itExists){
-            val newPlayer = player (name = dataBase.localPlayerId.value!!)
+            val newPlayer = player (name = sharedPreferences.getString("playerName", "Error getting name")!!)
             dataBase.db.collection("players")
                 .add(newPlayer)
             Log.d ("test", "Player " + newPlayer + " is created")
