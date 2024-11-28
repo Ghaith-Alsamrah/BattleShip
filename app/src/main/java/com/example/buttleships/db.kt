@@ -1,17 +1,12 @@
 package com.example.buttleships
 
-import android.annotation.SuppressLint
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.util.UUID
 
-class dataBase : ViewModel() {
+class Database : ViewModel() {
     var db = Firebase.firestore
     var localPlayerId = mutableStateOf<String?>(null)
     val playerList = MutableStateFlow<Map<String, player>>(emptyMap())

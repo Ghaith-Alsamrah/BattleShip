@@ -1,6 +1,7 @@
 package com.example.buttleships
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Scaffold
@@ -32,26 +32,36 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.flow.asStateFlow
 
 
 @Composable
-fun secondScreen (navController: NavController, dataBase: dataBase) {
+fun secondScreen (navController: NavController, dataBase: Database, isProcessing: IsProcessing) {
+    //The offline information from storage with an ID of "BattleShipPrefs"
     val sharedPreferences = LocalContext.current.getSharedPreferences("BattleShipPrefs", Context.MODE_PRIVATE)
+    val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf("") }
 
     // Check for playerId in SharedPreferences
     LaunchedEffect(Unit) {
+        //Retrieves the name from the shared preferences
         dataBase.localPlayerId.value = sharedPreferences.getString("playerId", null)
+
 
         if (dataBase.localPlayerId.value != null) {
             navController.navigate("lobby")
         }
+
+
     }
     if (dataBase.localPlayerId.value == null) {
         var name by remember{ mutableStateOf("") }
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
             Box(modifier = Modifier.padding(innerPadding)) {// the box is allow you to have multiple things over each other
                 Image(
                     painter = painterResource(R.drawable.background),
@@ -87,10 +97,13 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
                     )
                     Button(
                         onClick = {
-                            if(name.isNotBlank()) {
+                            if(name.isNotBlank() && !isProcessing.isProcessing2.value ) {
+                                isProcessing.isProcessing2.value = true
                                 val newPlayer = player(name = name)
+                                //Accesses the database collection that's called "players"
                                 dataBase.db.collection("players")
                                     .add(newPlayer)
+                                    //Document Ref = Document references which is the new data that has been created into the database
                                     .addOnSuccessListener { documentRef ->
                                         val playerId = documentRef.id
 
@@ -99,6 +112,7 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
                                         dataBase.localPlayerId.value = playerId
 
                                         navController.navigate(nav.lobby)
+                                        isProcessing.isProcessing2.value = false
                                     }
                             }
                                   },
@@ -111,6 +125,21 @@ fun secondScreen (navController: NavController, dataBase: dataBase) {
                     Row(modifier = Modifier.padding(100.dp)) {}
                 }
             }
+        }
+    }
+    else {
+        var itExists = false
+        players.forEach{ player ->
+            if (dataBase.localPlayerId.value == player.value.name){
+                itExists = true
+            }
+        }
+        if (!itExists){
+            val newPlayer = player (name = dataBase.localPlayerId.value!!)
+            dataBase.db.collection("players")
+                .add(newPlayer)
+            Log.d ("test", "Player " + newPlayer + " is created")
+            itExists = true
         }
     }
 }
