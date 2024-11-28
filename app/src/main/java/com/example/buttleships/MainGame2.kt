@@ -112,6 +112,7 @@ class Cell () {
         }
     }
 //new it company name
+    @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawImage(ship: Ships?){
     var currentShip = ships.last()
@@ -290,8 +291,8 @@ class Grid () {
             adjustmentY = y + ship.shipLength - 10
 
         }
-        if (x + ship.shipLength > 8) {
-            adjustmentX = x + ship.shipLength - 9
+        if (x + ship.shipLength > 9) {
+            adjustmentX = x + ship.shipLength - 10
         }
         for (i in 0 until ship.shipLength) {
             if (ship.imageRotation.value < 1) {
@@ -361,8 +362,8 @@ class Grid () {
         Log.d ("test", "The old starting position of the ship is " + ship.startPosition2.value)
         var currentShip = selectedShip.value!!
         var adjustment = 0
-        if (newY + ship.shipLength > 9){
-            adjustment = newY + ship.shipLength - 9
+        if (newY + ship.shipLength > 10){
+            adjustment = newY + ship.shipLength - 10
         }
         for (i in 0 until ship.shipLength) {
 
