@@ -175,6 +175,7 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
     var selectedShip: MutableState <Ships?> = mutableStateOf(null)
     var isReady : MutableState <Boolean> = mutableStateOf(false)
     var shipLocation : MutableList<String> = mutableListOf("")
+    var shipLocation1 : MutableList<String> = mutableListOf("")
 
 
 
@@ -258,10 +259,21 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
                                 }
                             }
                         }
-                        isReady2(ready)
-                        //  if (ready){
 
-                        //}
+                        games.forEach { (gameId, game) ->
+                            if (ready) {
+                                dataBase.db.collection("players")
+                                    .document(game.player1Id)
+                                    .update("ready", ready)
+                            }
+                            if (ready) {
+                                dataBase.db.collection("players")
+                                    .document(game.player2Id)
+                                    .update("ready", ready)
+                            }
+                        }
+                        isReady2(ready)
+
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -383,61 +395,57 @@ data class Grid (val dataBase: dataBase ,val players : Map<String, player> , val
     fun isReady2 (ready : Boolean) {
 
 
-        games.forEach { (gameId, game) ->
-            if (players[games[gameId]!!.player1Id]!!.ready) {
-                if (game.player1Id == dataBase.localPlayerId.value) {
-                    Log.d("sss", "${ready}")
-
-                    Log.d("sss", "${this.isReady.value}")
-                    if (this.isReady.value) {
-                        for (i in 0 until 10) {
-                            for (j in 0 until 10) {
-                                if (gridArray[i][j].ships.isNotEmpty()) {
-                                    shipLocation.add(i.toString() + j.toString())
-
-                                    dataBase.db.collection("games")
-                                        .document(gameId)
-                                        .update("player1ships", shipLocation)
-
-                                    Log.d("shipp", "${shipLocation.last()}")
-
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (game.player2Id == dataBase.localPlayerId.value) {
-                    Log.d("sss", "${ready}")
-                    Log.d("sss", "${this.isReady.value}")
-                    if (this.isReady.value) {
-                        for (i in 0 until 10) {
-                            for (j in 0 until 10) {
-                                if (gridArray[i][j].ships.isNotEmpty()) {
-                                    shipLocation.add(i.toString() + j.toString())
-                                    dataBase.db.collection("games")
-                                        .document(gameId)
-                                        .update("player2ships", shipLocation)
-
-                                    Log.d("shipp", "${shipLocation.last()}")
-
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (ready) {
-                    for (i in 0 until 10) {
-                        for (j in 0 until 10) {
-                            gridArray[i][j].isReady2 = true
-                            gridArray[i][j].reassignColor()
-                        }
-                    }
-                    this.isReady.value = ready
+        if (ready) {
+            for (i in 0 until 10) {
+                for (j in 0 until 10) {
+                    gridArray[i][j].isReady2 = true
+                    gridArray[i][j].reassignColor()
                 }
             }
+            this.isReady.value = ready
         }
+
+        games.forEach { (gameId, game) ->
+            if (game.player1Id == dataBase.localPlayerId.value) {
+                Log.d("sss", "${ready}")
+
+                Log.d("sss", "${this.isReady.value}")
+                if (players[games[gameId]!!.player1Id]!!.ready) {
+                    for (i in 0 until 10) {
+                        for (j in 0 until 10) {
+                            if (gridArray[i][j].ships.isNotEmpty()) {
+                                shipLocation.add(i.toString() + j.toString())
+                                Log.d("shipp", "1")
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (game.player2Id == dataBase.localPlayerId.value) {
+                if (players[games[gameId]!!.player2Id]!!.ready){
+                    for (i in 0 until 10) {
+                        for (j in 0 until 10) {
+                            if (gridArray[i][j].ships.isNotEmpty()) {
+                                shipLocation1.add(i.toString() + j.toString())
+                                Log.d("shipp", "2")
+
+                            }
+                        }
+                    }
+                }
+            }
+            dataBase.db.collection("games")
+                .document(gameId)
+                .update("player1ships", shipLocation)
+
+            dataBase.db.collection("games")
+                .document(gameId)
+                .update("player2ships", shipLocation1)
+        }
+
+
     }
 
 
