@@ -185,7 +185,6 @@ data class Grid(
 ) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
-    var isReady: MutableState<Boolean> = mutableStateOf(false)
     var shipLocation: MutableList<String> = mutableListOf("")
     var shipLocation1: MutableList<String> = mutableListOf("")
     var currentGameId: String = ""
@@ -221,7 +220,7 @@ data class Grid(
                                 )
                                 {
                                     currentCell.DrawBox(onClick = {
-                                        if (!isReady.value) {
+                                        if (!players[dataBase.localPlayerId.value]!!.ready) {
                                             if (selectedShip.value != null) {
                                                 if (selectedShip.value!!.imageRotation.value > 0) {
                                                     replaceShip(selectedShip.value!!, j, i)
@@ -262,7 +261,7 @@ data class Grid(
                         .padding(top = 50.dp)
                 ) { Text("Rotate") }
             }
-            if (!isReady.value) {
+            if (!players[dataBase.localPlayerId.value]!!.ready) {
                 Button(
                     onClick = {
                         var ready = true
@@ -275,7 +274,6 @@ data class Grid(
                             }
                         }
                         if (ready) {
-
                             if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
                                 dataBase.db.collection("players")
                                     .document(games[currentGameId]!!.player1Id)
@@ -421,11 +419,16 @@ data class Grid(
                     gridArray[i][j].reassignColor()
                 }
             }
-            this.isReady.value = ready
+            if (players[dataBase.localPlayerId.value] == players[games[currentGameId]!!.player1Id]) {
+                players[games[currentGameId]!!.player1Id]!!.ready = ready
+            }else{
+                players[games[currentGameId]!!.player2Id]!!.ready = ready
+            }
         }
 
 
-        if (players[games[currentGameId]!!.player1Id]!!.ready) {
+        if (players[games[currentGameId]!!.player1Id]!!
+            == players[dataBase.localPlayerId.value]) {
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
@@ -437,7 +440,7 @@ data class Grid(
                 }
             }
         }
-        if (players[games[currentGameId]!!.player2Id]!!.ready) {
+        if (players[games[currentGameId]!!.player2Id]!! == players[dataBase.localPlayerId.value]) {
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
@@ -449,7 +452,7 @@ data class Grid(
                 }
             }
         }
-        if (players[games[currentGameId]!!.player1Id]!!.ready) {
+        if (players[dataBase.localPlayerId.value]!!.ready) {
             if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
                 dataBase.db.collection("games")
                     .document(currentGameId)
@@ -460,20 +463,18 @@ data class Grid(
                     .addOnFailureListener { e ->
                         Log.e("test4", "Error updating player1ships", e)
                     }
-            }
-        }
-        if (players[games[currentGameId]!!.player2Id]!!.ready) {
-            if (games[currentGameId]!!.player2Id == dataBase.localPlayerId.value) {
+            }else {
                 dataBase.db.collection("games")
                     .document(currentGameId)
                     .update("player2ships", shipLocation1)
                     .addOnSuccessListener {
-                        Log.d("test4", "Successfully updated player1ships")
+                        Log.d("test4", "Successfully updated player2ships")
                     }
                     .addOnFailureListener { e ->
                         Log.e("test4", "Error updating player1ships", e)
                     }
             }
+
         }
     }
 
