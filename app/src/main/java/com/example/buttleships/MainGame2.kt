@@ -243,11 +243,7 @@ data class Grid(
 
                     }
                 }
-                for (ship in battleShips) {
-                    val currentCell =
-                        gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
-                    currentCell.DrawImage(ship)
-                }
+
             }
             if (selectedShip.value != null) {
                 Button(
@@ -432,7 +428,8 @@ data class Grid(
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocation.add(i.toString() + j.toString())
+                        shipLocation.add(i.toString() + j.toString()+
+                                gridArray[i][j].ships.last().shipLength.toString())
                         Log.d("shipp", "1")
 
 
@@ -444,7 +441,8 @@ data class Grid(
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocation1.add(i.toString() + j.toString())
+                        shipLocation1.add(i.toString() + j.toString() +
+                                gridArray[i][j].ships.last().shipLength.toString())
                         Log.d("shipp", "2")
 
 
@@ -478,7 +476,20 @@ data class Grid(
         }
     }
 
-
+    @Composable
+    fun DrawShips () {
+        for (ship in battleShips) {
+            val currentCell =
+                gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
+            currentCell.DrawImage(ship)
+        }
+    }
+/*
+    fun getCoordinates (playerID:String){
+        val ships =
+    }
+    
+ */
 }
 
 
@@ -556,8 +567,13 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                     ) {
                         val grid = Grid(dataBase, players, games)
                         grid.currentGameId = gameId
-                        grid.startingPosition()
                         grid.DrawGrid(grid.gridArray)
+                        if (players[dataBase.localPlayerId.value]?.ready != true) {
+                            grid.startingPosition()
+                            grid.DrawShips()
+                        }
+                        grid.DrawShips()
+
                     }
                 }
             }
