@@ -32,9 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -119,7 +117,7 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
                                         itExists = true
                                     }
                             }
-                                  },
+                        },
                         colors = buttonColors( // this will make the button it self red
                             containerColor = Color.Red
                         )
@@ -133,15 +131,20 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
     }
     else {
 
-        players.forEach{ player ->
-            if (dataBase.localPlayerId.value == player.value.name){
-                itExists = true
-            }
+
+        if (players[sharedPreferences.getString("playerId", "Error getting ID")] != null){
+            itExists = true
         }
+
         if (!itExists){
             val newPlayer = player (name = sharedPreferences.getString("playerName", "Error getting name")!!)
             dataBase.db.collection("players")
                 .add(newPlayer)
+                .addOnSuccessListener { documentRef ->
+                    val playerId = documentRef.id
+                    sharedPreferences.edit().putString("playerId", playerId).apply()
+                    dataBase.localPlayerId.value = playerId
+                }
             Log.d ("test", "Player " + newPlayer + " is created")
             itExists = true
         }
