@@ -146,7 +146,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                 onClick = {
                                                     dataBase.db.collection("players")
                                                         .document(dataBase.localPlayerId.value!!)
-                                                        .update("playerNumber", 2)
+                                                        .update("enemyPlayer", games[gameId]?.player1Id)
                                                         .addOnSuccessListener {
                                                             Log.d("Database", "Succ updated to player 2")
                                                         }
@@ -184,7 +184,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                 dataBase.db.collection("players")
                                                     .document(dataBase.localPlayerId.value!!)
                                                     .update(
-                                                        "playerNumber", 1
+                                                        "enemyPlayer", documentId
                                                     )
                                                     .addOnSuccessListener {
                                                         Log.d("Database", "Succ added player 1")

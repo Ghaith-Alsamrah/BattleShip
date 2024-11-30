@@ -17,7 +17,7 @@ data class player(
     var name: String = "",
     var ready: Boolean = false,
     var playerShips: List<Int> = listOf(0),
-    var playerNumber: Int = 0
+    var enemyPlayer: String = ""
 )
 
 data class game(

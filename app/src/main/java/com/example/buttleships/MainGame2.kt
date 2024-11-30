@@ -75,6 +75,28 @@ val battleShips = arrayOf(
         shipRotatedImage = R.drawable.ship3x1rotated
     ),
 )
+val enemyBattleShips = arrayOf(
+    Ships(
+        "1x1", 1, shipImage = R.drawable.ship1x1copy,
+        shipRotatedImage = R.drawable.ship1x1rotated
+    ),
+    Ships(
+        "1x2", 2, R.drawable.ship2x1copy,
+        shipRotatedImage = R.drawable.ship2x1rotated
+    ),
+    Ships(
+        "1x3", 3, R.drawable.ship3x1copy,
+        shipRotatedImage = R.drawable.ship3x1rotated
+    ),
+    Ships(
+        "1x4", 4, R.drawable.ship4x1copy,
+        shipRotatedImage = R.drawable.ship4x1rotated
+    ),
+    Ships(
+        "1x5", 5, R.drawable.ship3x1copy,
+        shipRotatedImage = R.drawable.ship3x1rotated
+    ),
+)
 
 class Cell() {
     var ships: MutableList<Ships> = mutableListOf()
@@ -133,9 +155,11 @@ class Cell() {
     @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawImage(ship: Ships?) {
-        var currentShip = ships.last()
+        var currentShip = Ships("bla",0,0,0)
         if (ship != null) {
             currentShip = ship
+        }else{
+            currentShip = ships.last()
         }
 
         var offsetXAdjustment = 0
@@ -153,7 +177,7 @@ class Cell() {
                 .padding(bottom = 40.dp)
         ) {
             Image(
-                painter = painterResource(id = ships.last().image),
+                painter = painterResource(id = currentShip.image),
                 contentDescription = "${currentShip.shipName}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -184,6 +208,7 @@ data class Grid(
     val games: Map<String, game>
 ) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
+    val enemyGridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
     var shipLocationLocalPlayer: MutableList<Int> = mutableListOf(0)
     var shipLocationEnemyPlayer: MutableList<Int> = mutableListOf(0)
@@ -248,7 +273,7 @@ data class Grid(
             if (selectedShip.value != null) {
                 Button(
                     onClick = {
-                        rotateImage()
+                        rotateImage(gridArray,null)
                         selectedShip.value = null
 
                     },
@@ -270,24 +295,9 @@ data class Grid(
                             }
                         }
                         if (ready) {
-                            players[dataBase.localPlayerId.value]?.ready = true
-                            /*
-                            if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
-                                dataBase.db.collection("players")
-                                    .document(games[currentGameId]!!.player1Id)
-                                    .update("ready", ready)
-
-                            }
-
-                            else if (games[currentGameId]!!.player2Id == dataBase.localPlayerId.value) {
-                                dataBase.db.collection("players")
-                                    .document(games[currentGameId]!!.player2Id)
-                                    .update("ready", ready)
-                            }
-
-                             */
-
-
+                            dataBase.db.collection("players")
+                                .document(dataBase.localPlayerId.value!!)
+                                .update("ready", true)
                         }
                         isReady2(ready)
 
@@ -303,18 +313,20 @@ data class Grid(
     }
 
     @SuppressLint("SuspiciousIndentation")
-    fun rotateImage() {
-        val currentShip = selectedShip.value!!
+    fun rotateImage( gridArray: Array<Array<Cell>>, ship: Ships? ) {
+
+        val currentShip = ship?:selectedShip.value!!
         currentShip.imageRotation.value = (currentShip.imageRotation.value + 90f) % 180
         rotateimage2(
             currentShip,
             currentShip.startPosition2.value.row,
-            currentShip.startPosition2.value.column
+            currentShip.startPosition2.value.column,
+            gridArray
         )
 
     }
 
-    fun rotateimage2(ship: Ships, x: Int, y: Int) {
+    fun rotateimage2(ship: Ships, x: Int, y: Int,  gridArray: Array<Array<Cell>>) {
         var adjustmentX = 0
         var adjustmentY = 0
         if (y + ship.shipLength > 9) {
@@ -437,9 +449,16 @@ data class Grid(
                     if (gridArray[i][j].ships.size > 0){
                         val currentShip = gridArray[i][j].ships.last()
                         var rotation = 0
+                        var isStartingPosition = 0
                         if (currentShip.imageRotation.value<1)
                             rotation = 1
-                        shipLocationLocalPlayer.add((currentShip.shipLength * 10)  + rotation)
+                        if (currentShip.startPosition2.value.row == i &&
+                            currentShip.startPosition2.value.column == j){
+                            isStartingPosition = 1
+                        }
+                        shipLocationLocalPlayer.add((isStartingPosition * 100) + (currentShip.shipLength * 10)  + rotation)
+                    }else{
+                        shipLocationLocalPlayer.add(0)
                     }
 
 
@@ -450,38 +469,10 @@ data class Grid(
         dataBase.db.collection("players")
             .document(dataBase.localPlayerId.value!!)
             .update("playerShips", shipLocationLocalPlayer)
-
-        /*
-        if (players[dataBase.localPlayerId.value]!!.ready) {
-            if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
-                dataBase.db.collection("games")
-                    .document(currentGameId)
-                    .update("player1ships", shipLocationLocalPlayer)
-                    .addOnSuccessListener {
-                        Log.d("test4", "Successfully updated player1ships")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("test4", "Error updating player1ships", e)
-                    }
-            }else {
-                dataBase.db.collection("games")
-                    .document(currentGameId)
-                    .update("player2ships", shipLocationEnemyPlayer)
-                    .addOnSuccessListener {
-                        Log.d("test4", "Successfully updated player2ships")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("test4", "Error updating player1ships", e)
-                    }
-            }
-
-        }
-
-         */
     }
 
     @Composable
-    fun DrawShips () {
+    fun DrawShips ( battleShips: Array<Ships> ) {
         for (ship in battleShips) {
             val currentCell =
                 gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column]
@@ -489,12 +480,51 @@ data class Grid(
         }
     }
 
-    /*
-    fun getCoordinates (playerID:String){
-        val ships = players[games[currentGameId].playerID]
+
+    fun getCoordinates (){
+            this.shipLocationEnemyPlayer =
+                players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.playerShips as MutableList<Int>
+
+
+
     }
 
-     */
+    fun setEnemyShips () {
+        for (i in 0 until 10){
+            for (j in 0 until 10){
+                Log.d("settingEnemyShips", "Setting up " + i + " " + j )
+                val currentShip = this.shipLocationEnemyPlayer[i*10 + j]
+                if (currentShip == 0){
+                    continue
+                }else{
+                    Log.d("settingEnemyShips", "assigning ship")
+                    enemyGridArray[i][j].assignShip(
+                        enemyBattleShips[((currentShip / 10)%10) - 1],
+                        x = i,
+                        y = j
+                    )
+                    //if it is the starting position of the ship that's being imported
+                    if (currentShip / 100 == 1) {
+                        Log.d("settingEnemyShips", "assigning Starting Position" )
+                        enemyGridArray[i][j].ships.last().startPosition2.value = Position(i,j)
+                    }
+                    //if image is rotated
+                    if (currentShip%10>0){
+                        rotateImage(
+                            ship = battleShips[(currentShip / 10) - 1],
+                            gridArray = enemyGridArray
+                        )
+                    }
+                    Log.d("settingEnemyShips", "The starting position is " +
+                            enemyGridArray[i][j].ships.last().startPosition2.value)
+                }
+            }
+
+        }
+
+    }
+
+
 
 
 }
@@ -577,7 +607,11 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         grid.DrawGrid(grid.gridArray)
                         if (players[dataBase.localPlayerId.value]?.ready != true) {
                             grid.startingPosition()
-                            grid.DrawShips()
+                            grid.DrawShips(battleShips)
+                        }else if (players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true){
+                            grid.getCoordinates()
+                            grid.setEnemyShips()
+                            grid.DrawShips(enemyBattleShips)
                         }
                         //grid.DrawShips()
 
