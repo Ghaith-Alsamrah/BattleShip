@@ -505,38 +505,33 @@ data class Grid(
     fun setEnemyShips () {
         for (i in 0 until 10){
             for (j in 0 until 10){
-                Log.d("settingEnemyShips", "Setting up " + i + " " + j )
                 val currentShip = this.shipLocationEnemyPlayer[i*10 + j]
                 if (currentShip == 0){
                     continue
                 }else{
-                    Log.d("settingEnemyShips", "assigning ship")
-                    if (currentShip%10>0){
-
-                        enemyGridArray[i][j].assignShip(
-                            enemyBattleShips[((currentShip / 10) % 10) - 1],
-                            x = j,
-                            y = i
-                        )
-                    }else {
-                        enemyGridArray[i][j].assignShip(
-                            enemyBattleShips[((currentShip / 10) % 10) - 1],
-                            x = i,
-                            y = j
-                        )
-                    }
-                    //if it is the starting position of the ship that's being imported
                     if (currentShip / 100 == 1) {
                         if (currentShip%10>0){
-                            enemyGridArray[i][j].assignShip(
-                                enemyBattleShips[((currentShip / 10) % 10) - 1],
-                                x = j,
-                                y = i
-                            )
+                            for (k in 0 until ((currentShip / 10) % 10) ){
+                                enemyGridArray[i+k][j].assignShip(
+                                    enemyBattleShips[((currentShip / 10) % 10)-1],
+                                    x = i+k,
+                                    y = j
+                                )
+                                enemyGridArray[i+k][j].ships.last().startPosition2.value = Position(i+k,j)
+                                enemyGridArray[i+k][j].ships.last().imageRotation = mutableStateOf(0f)
+                                Log.d("settingEnemyShips" ,"The ship is rotated and filled " + i+k +" " + j )
+                            }
                         }else{
-
+                            for (k in 0 until ((currentShip / 10) % 10) ){
+                                enemyGridArray[i][j+k].assignShip(
+                                    enemyBattleShips[((currentShip / 10) % 10) - 1],
+                                    x = i,
+                                    y = j+k
+                                )
+                                enemyGridArray[i][j+k].ships.last().startPosition2.value = Position(i,j+k)
+                                Log.d("settingEnemyShips" ,"The ship is not rotated and filled " + i +" " + (j+k) )
+                            }
                         }
-                        Log.d("settingEnemyShips", "assigning Starting Position" )
                         enemyGridArray[i][j].ships.last().startPosition2.value = Position(i,j)
                     }
                     //if image is rotated
@@ -560,7 +555,7 @@ data class Grid(
 fun MainGame2(navController: NavController, dataBase: Database, gameId: String?) {
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
-
+    var gameStarted = false
     if (gameId != null && games.containsKey(gameId)) {
 
         Scaffold { innerPadding ->
@@ -629,11 +624,15 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         contentAlignment = Alignment.Center
                     ) {
                         val grid = Grid(dataBase, players, games)
+                        if (players[dataBase.localPlayerId.value]?.ready == true &&
+                            players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true)
+                                gameStarted = true
+
+
                         grid.currentGameId = gameId
                         grid.DrawGrid(grid.gridArray)
-                        if (players[dataBase.localPlayerId.value]?.ready == true &&
-                            players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true){
-
+                        if (gameStarted){
+                            //if (games[gameId].gameState )
                             grid.getCoordinates()
                             grid.setEnemyShips()
                             grid.DrawShips(enemyBattleShips)
@@ -642,9 +641,6 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             dataBase.stopListening(playerListener)
                             grid.startingPosition()
                             grid.DrawShips(battleShips)
-                        }else if (players[dataBase.localPlayerId.value]?.ready == true){
-
-
                         }
 
                         //grid.DrawShips()
