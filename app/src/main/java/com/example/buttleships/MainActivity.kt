@@ -17,6 +17,7 @@ data class player(
     var name: String = "",
     var ready: Boolean = false,
     var playerShips: List<Int> = listOf(0),
+    var guessedShips: MutableList<Int> = mutableListOf(),
     var enemyPlayer: String = ""
 )
 
