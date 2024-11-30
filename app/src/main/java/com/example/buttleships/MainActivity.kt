@@ -16,7 +16,7 @@ import com.example.buttleships.ui.theme.ButtleshipsTheme
 data class player(
     var name: String = "",
     var ready: Boolean = false,
-    var playerShips: List<String> = listOf(""),
+    var playerShips: List<Int> = listOf(0),
     var playerNumber: Int = 0
 )
 

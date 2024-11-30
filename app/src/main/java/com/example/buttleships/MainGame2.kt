@@ -185,8 +185,8 @@ data class Grid(
 ) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
-    var shipLocationPlayer1: MutableList<String> = mutableListOf("")
-    var shipLocationPlayer2: MutableList<String> = mutableListOf("")
+    var shipLocationLocalPlayer: MutableList<Int> = mutableListOf(0)
+    var shipLocationEnemyPlayer: MutableList<Int> = mutableListOf(0)
     var currentGameId: String = ""
 
 
@@ -270,15 +270,22 @@ data class Grid(
                             }
                         }
                         if (ready) {
+                            players[dataBase.localPlayerId.value]?.ready = true
+                            /*
                             if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
                                 dataBase.db.collection("players")
                                     .document(games[currentGameId]!!.player1Id)
                                     .update("ready", ready)
-                            } else if (games[currentGameId]!!.player2Id == dataBase.localPlayerId.value) {
+
+                            }
+
+                            else if (games[currentGameId]!!.player2Id == dataBase.localPlayerId.value) {
                                 dataBase.db.collection("players")
                                     .document(games[currentGameId]!!.player2Id)
                                     .update("ready", ready)
                             }
+
+                             */
 
 
                         }
@@ -426,34 +433,30 @@ data class Grid(
 
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
-                    if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocationPlayer1.add(i.toString() + j.toString()+
-                                gridArray[i][j].ships.last().shipLength.toString())
-                        Log.d("ship", "1")
 
-
+                    if (gridArray[i][j].ships.size > 0){
+                        val currentShip = gridArray[i][j].ships.last()
+                        var rotation = 0
+                        if (currentShip.imageRotation.value<1)
+                            rotation = 1
+                        shipLocationLocalPlayer.add((currentShip.shipLength * 10)  + rotation)
                     }
+
+
                 }
             }
 
-        if (players[games[currentGameId]!!.player2Id]!! == players[dataBase.localPlayerId.value]) {
-            for (i in 0 until 10) {
-                for (j in 0 until 10) {
-                    if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocationPlayer2.add(i.toString() + j.toString() +
-                                gridArray[i][j].ships.last().shipLength.toString())
-                        Log.d("shipp", "2")
 
+        dataBase.db.collection("players")
+            .document(dataBase.localPlayerId.value!!)
+            .update("playerShips", shipLocationLocalPlayer)
 
-                    }
-                }
-            }
-        }
+        /*
         if (players[dataBase.localPlayerId.value]!!.ready) {
             if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
                 dataBase.db.collection("games")
                     .document(currentGameId)
-                    .update("player1ships", shipLocationPlayer1)
+                    .update("player1ships", shipLocationLocalPlayer)
                     .addOnSuccessListener {
                         Log.d("test4", "Successfully updated player1ships")
                     }
@@ -463,7 +466,7 @@ data class Grid(
             }else {
                 dataBase.db.collection("games")
                     .document(currentGameId)
-                    .update("player2ships", shipLocationPlayer2)
+                    .update("player2ships", shipLocationEnemyPlayer)
                     .addOnSuccessListener {
                         Log.d("test4", "Successfully updated player2ships")
                     }
@@ -473,6 +476,8 @@ data class Grid(
             }
 
         }
+
+         */
     }
 
     @Composable
@@ -574,7 +579,7 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             grid.startingPosition()
                             grid.DrawShips()
                         }
-                        grid.DrawShips()
+                        //grid.DrawShips()
 
                     }
                 }
