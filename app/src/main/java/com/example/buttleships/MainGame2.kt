@@ -444,7 +444,7 @@ data class Grid(
         }
 
 
-
+            shipLocationLocalPlayer.removeAt(0)
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
 
@@ -458,7 +458,8 @@ data class Grid(
                             currentShip.startPosition2.value.column == j){
                             isStartingPosition = 1
                         }
-                        shipLocationLocalPlayer.add((isStartingPosition * 100) + (currentShip.shipLength * 10)  + rotation)
+                        shipLocationLocalPlayer.add(
+                            (isStartingPosition * 100) + (currentShip.shipLength * 10)  + rotation)
                     }else{
                         shipLocationLocalPlayer.add(0)
                     }
