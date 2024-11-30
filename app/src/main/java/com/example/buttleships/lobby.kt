@@ -144,6 +144,12 @@ fun lobby(navController: NavController, dataBase: Database) {
                                         ) {
                                             TextButton(
                                                 onClick = {
+                                                    dataBase.db.collection("players")
+                                                        .document(dataBase.localPlayerId.value!!)
+                                                        .update("playerNumber", 2)
+                                                        .addOnSuccessListener {
+                                                            Log.d("Database", "Succ updated to player 2")
+                                                        }
                                                     dataBase.db.collection("games")
                                                         .document(gameId)
                                                         .update("gameState", "player1_turn")
@@ -175,8 +181,13 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                             player2Id = documentId
                                                         )
                                                     )
-                                                    .addOnSuccessListener { documentRef ->
-                                                        // TODO: Navigate?
+                                                dataBase.db.collection("players")
+                                                    .document(dataBase.localPlayerId.value!!)
+                                                    .update(
+                                                        "playerNumber", 1
+                                                    )
+                                                    .addOnSuccessListener {
+                                                        Log.d("Database", "Succ added player 1")
                                                     }
                                             },
                                             modifier = Modifier.padding(10.dp)

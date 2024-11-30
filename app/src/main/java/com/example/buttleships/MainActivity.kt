@@ -16,11 +16,11 @@ import com.example.buttleships.ui.theme.ButtleshipsTheme
 data class player(
     var name: String = "",
     var ready: Boolean = false,
+    var playerShips: List<String> = listOf(""),
+    var playerNumber: Int = 0
 )
 
 data class game(
-    var player1ships: List<String> = listOf(""),
-    var player2ships: List<String> = listOf(""),
     var gameState: String = "invite",
     var player1Id: String = "",
     var player2Id: String = ""

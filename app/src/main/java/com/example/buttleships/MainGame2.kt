@@ -185,8 +185,8 @@ data class Grid(
 ) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
-    var shipLocation: MutableList<String> = mutableListOf("")
-    var shipLocation1: MutableList<String> = mutableListOf("")
+    var shipLocationPlayer1: MutableList<String> = mutableListOf("")
+    var shipLocationPlayer2: MutableList<String> = mutableListOf("")
     var currentGameId: String = ""
 
 
@@ -423,25 +423,24 @@ data class Grid(
         }
 
 
-        if (players[games[currentGameId]!!.player1Id]!!
-            == players[dataBase.localPlayerId.value]) {
+
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocation.add(i.toString() + j.toString()+
+                        shipLocationPlayer1.add(i.toString() + j.toString()+
                                 gridArray[i][j].ships.last().shipLength.toString())
-                        Log.d("shipp", "1")
+                        Log.d("ship", "1")
 
 
                     }
                 }
             }
-        }
+
         if (players[games[currentGameId]!!.player2Id]!! == players[dataBase.localPlayerId.value]) {
             for (i in 0 until 10) {
                 for (j in 0 until 10) {
                     if (gridArray[i][j].ships.isNotEmpty()) {
-                        shipLocation1.add(i.toString() + j.toString() +
+                        shipLocationPlayer2.add(i.toString() + j.toString() +
                                 gridArray[i][j].ships.last().shipLength.toString())
                         Log.d("shipp", "2")
 
@@ -454,7 +453,7 @@ data class Grid(
             if (games[currentGameId]!!.player1Id == dataBase.localPlayerId.value) {
                 dataBase.db.collection("games")
                     .document(currentGameId)
-                    .update("player1ships", shipLocation)
+                    .update("player1ships", shipLocationPlayer1)
                     .addOnSuccessListener {
                         Log.d("test4", "Successfully updated player1ships")
                     }
@@ -464,7 +463,7 @@ data class Grid(
             }else {
                 dataBase.db.collection("games")
                     .document(currentGameId)
-                    .update("player2ships", shipLocation1)
+                    .update("player2ships", shipLocationPlayer2)
                     .addOnSuccessListener {
                         Log.d("test4", "Successfully updated player2ships")
                     }
@@ -484,12 +483,15 @@ data class Grid(
             currentCell.DrawImage(ship)
         }
     }
-/*
+
+    /*
     fun getCoordinates (playerID:String){
-        val ships =
+        val ships = players[games[currentGameId].playerID]
     }
-    
- */
+
+     */
+
+
 }
 
 
