@@ -17,7 +17,7 @@ class Database : ViewModel() {
 
 
     fun listentoPlayer() {
-        playerListener = db.collection("players") // this players sould be the same as the collection name in firebase
+        playerListener = db.collection("players")
                 .addSnapshotListener { value, error ->
                     if (error != null) {
                         return@addSnapshotListener
