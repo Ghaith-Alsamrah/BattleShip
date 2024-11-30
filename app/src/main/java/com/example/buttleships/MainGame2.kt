@@ -158,6 +158,7 @@ class Cell() {
         var currentShip = Ships("bla",0,0,0)
         if (ship != null) {
             currentShip = ship
+
         }else{
             currentShip = ships.last()
         }
@@ -295,6 +296,7 @@ data class Grid(
                             }
                         }
                         if (ready) {
+
                             dataBase.db.collection("players")
                                 .document(dataBase.localPlayerId.value!!)
                                 .update("ready", true)
@@ -503,6 +505,7 @@ data class Grid(
                         x = i,
                         y = j
                     )
+                    enemyGridArray[i][j].reassignColor()
                     //if it is the starting position of the ship that's being imported
                     if (currentShip / 100 == 1) {
                         Log.d("settingEnemyShips", "assigning Starting Position" )
@@ -605,10 +608,16 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         val grid = Grid(dataBase, players, games)
                         grid.currentGameId = gameId
                         grid.DrawGrid(grid.gridArray)
+
                         if (players[dataBase.localPlayerId.value]?.ready != true) {
+                            dataBase.stopListening(playerListener)
                             grid.startingPosition()
                             grid.DrawShips(battleShips)
-                        }else if (players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true){
+                        }else if (players[dataBase.localPlayerId.value]?.ready == true){
+                            dataBase.listentoPlayer()
+                        }
+                        if (players[dataBase.localPlayerId.value]?.ready == true &&
+                            players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true){
                             grid.getCoordinates()
                             grid.setEnemyShips()
                             grid.DrawShips(enemyBattleShips)

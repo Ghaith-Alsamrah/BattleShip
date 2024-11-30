@@ -3,9 +3,12 @@ package com.example.buttleships
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 
+var playerListener: ListenerRegistration? = null
+var gameListener: ListenerRegistration? = null
 class Database : ViewModel() {
     var db = Firebase.firestore
     var localPlayerId = mutableStateOf<String?>(null)
@@ -14,7 +17,7 @@ class Database : ViewModel() {
 
 
     fun listentoPlayer() {
-            db.collection("players") // this players sould be the same as the collection name in firebase
+        playerListener = db.collection("players") // this players sould be the same as the collection name in firebase
                 .addSnapshotListener { value, error ->
                     if (error != null) {
                         return@addSnapshotListener
@@ -31,9 +34,17 @@ class Database : ViewModel() {
         println("connection suc")
         }
 
+    fun stopListening(listener : ListenerRegistration?) {
+        listener?.remove()
+        if (listener == playerListener)
+            playerListener = null
+        else
+            gameListener = null
+    }
+
     fun listentoGame(){
         // Listen for games
-        db.collection("games")
+        gameListener = db.collection("games")
             .addSnapshotListener { value, error ->
                 if (error != null) {
                     return@addSnapshotListener
