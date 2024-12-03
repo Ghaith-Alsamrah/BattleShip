@@ -11,7 +11,7 @@ var playerListener: ListenerRegistration? = null
 var gameListener: ListenerRegistration? = null
 class Database : ViewModel() {
     var db = Firebase.firestore
-    var localPlayerId = mutableStateOf<String?>(null)
+    var localPlayerId : String? = null
     val playerList = MutableStateFlow<Map<String, player>>(emptyMap())
     val gameMap = MutableStateFlow<Map<String, game>>(emptyMap())
 
@@ -64,7 +64,7 @@ class Database : ViewModel() {
             .add(newPlayer)
             .addOnSuccessListener { documentReference ->
                 val playerId = documentReference.id
-                localPlayerId.value = playerId
+                localPlayerId = playerId
             }
     }
 

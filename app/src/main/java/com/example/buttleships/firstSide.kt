@@ -1,5 +1,6 @@
 package com.example.buttleships
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.navigation.NavController
 
 @Composable
 fun firstScreen(navController: NavController) {
+    Log.d("Callings", "firstscreen has been called")
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {// the box is allow you to have multiple things over each other
             Image(
