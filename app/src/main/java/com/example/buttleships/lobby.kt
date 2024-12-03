@@ -42,13 +42,14 @@ import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun lobby(navController: NavController, dataBase: Database) {
+    Log.d("Callings", "Lobby has been called")
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
 
     LaunchedEffect(games) {
         games.forEach { (gameId, game) ->
-            if ((game.player1Id == dataBase.localPlayerId.value
-                        || game.player2Id == dataBase.localPlayerId.value) && game.gameState == "player1_turn"
+            if ((game.player1Id == dataBase.localPlayerId
+                        || game.player2Id == dataBase.localPlayerId) && game.gameState == "player1_turn"
             ) {
                 navController.navigate("mainGame/${gameId}")
             }
@@ -56,7 +57,7 @@ fun lobby(navController: NavController, dataBase: Database) {
     }
 
     var playerName = "Unknown?"
-    players[dataBase.localPlayerId.value]?.let {
+    players[dataBase.localPlayerId]?.let {
         playerName = it.name
     }
 
@@ -105,8 +106,8 @@ fun lobby(navController: NavController, dataBase: Database) {
                         verticalArrangement = Arrangement.spacedBy(6.dp) // for spacing between items
                     ) {
                         items(players.entries.toList()) { (documentId, player) ->
-                            Log.d("test","The document id is " + documentId + " The local player id is: " + dataBase.localPlayerId.value )
-                            if (documentId != dataBase.localPlayerId.value) {
+                            Log.d("test","The document id is " + documentId + " The local player id is: " + dataBase.localPlayerId )
+                            if (documentId != dataBase.localPlayerId) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -129,7 +130,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                     )
                                     var hasGame = false
                                     games.forEach { (gameId, game) ->
-                                        if (game.player1Id == dataBase.localPlayerId.value
+                                        if (game.player1Id == dataBase.localPlayerId
                                             && game.gameState == "Invite"
                                         ) {
                                             Text(
@@ -139,13 +140,13 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                 fontSize = 16.sp
                                             )
                                             hasGame = true
-                                        } else if (game.player2Id == dataBase.localPlayerId.value
+                                        } else if (game.player2Id == dataBase.localPlayerId
                                             && game.gameState == "Invite"
                                         ) {
                                             TextButton(
                                                 onClick = {
                                                     dataBase.db.collection("players")
-                                                        .document(dataBase.localPlayerId.value!!)
+                                                        .document(dataBase.localPlayerId!!)
                                                         .update("enemyPlayer", games[gameId]?.player1Id)
                                                         .addOnSuccessListener {
                                                             Log.d("Database", "Succ updated to player 2")
@@ -177,12 +178,12 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                     .add(
                                                         game(
                                                             gameState = "Invite",
-                                                            player1Id = dataBase.localPlayerId.value!!,
+                                                            player1Id = dataBase.localPlayerId!!,
                                                             player2Id = documentId
                                                         )
                                                     )
                                                 dataBase.db.collection("players")
-                                                    .document(dataBase.localPlayerId.value!!)
+                                                    .document(dataBase.localPlayerId!!)
                                                     .update(
                                                         "enemyPlayer", documentId
                                                     )
