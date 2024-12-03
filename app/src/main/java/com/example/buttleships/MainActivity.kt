@@ -1,6 +1,7 @@
 package com.example.buttleships
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,25 +18,27 @@ data class player(
     var name: String = "",
     var ready: Boolean = false,
     var playerShips: List<Int> = listOf(0),
-    var guessedShips: MutableList<Int> = mutableListOf(),
     var enemyPlayer: String = ""
 )
 
 data class game(
     var gameState: String = "invite",
     var player1Id: String = "",
-    var player2Id: String = ""
+    var player2Id: String = "",
+    var playerAttempt : String = ""
 )
 
 class IsProcessing : ViewModel() {
     var isProcessing2 = mutableStateOf(false )
 }
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ButtleshipsTheme {
+                Log.d("Callings", "MainActivity has been called")
                 val dataBase = Database()
                 val isLoading = IsProcessing()
                 dataBase.listentoPlayer()
