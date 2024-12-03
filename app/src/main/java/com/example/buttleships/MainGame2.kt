@@ -20,10 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,11 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asStateFlow
 
 var recomposition = 0
-
+var gameStarted = false
 var turn = true
 
 data class Position(val row: Int, val column: Int)
@@ -58,51 +55,6 @@ class Ships(name: String, length: Int, shipImage: Int, shipRotatedImage: Int) {
     val image: Int = shipImage
     var imageRotation: MutableState<Float> = (mutableStateOf(90f))
 }
-
-val battleShips = arrayOf(
-    Ships(
-        "1x1", 1, shipImage = R.drawable.ship1x1copy,
-        shipRotatedImage = R.drawable.ship1x1rotated
-    ),
-    Ships(
-        "1x2", 2, R.drawable.ship2x1copy,
-        shipRotatedImage = R.drawable.ship2x1rotated
-    ),
-    Ships(
-        "1x3", 3, R.drawable.ship3x1copy,
-        shipRotatedImage = R.drawable.ship3x1rotated
-    ),
-    Ships(
-        "1x4", 4, R.drawable.ship4x1copy,
-        shipRotatedImage = R.drawable.ship4x1rotated
-    ),
-    Ships(
-        "1x5", 5, R.drawable.ship3x1copy,
-        shipRotatedImage = R.drawable.ship3x1rotated
-    ),
-)
-val enemyBattleShips = arrayOf(
-    Ships(
-        "1x1", 1, shipImage = R.drawable.ship1x1copy,
-        shipRotatedImage = R.drawable.ship1x1rotated
-    ),
-    Ships(
-        "1x2", 2, R.drawable.ship2x1copy,
-        shipRotatedImage = R.drawable.ship2x1rotated
-    ),
-    Ships(
-        "1x3", 3, R.drawable.ship3x1copy,
-        shipRotatedImage = R.drawable.ship3x1rotated
-    ),
-    Ships(
-        "1x4", 4, R.drawable.ship4x1copy,
-        shipRotatedImage = R.drawable.ship4x1rotated
-    ),
-    Ships(
-        "1x5", 5, R.drawable.ship3x1copy,
-        shipRotatedImage = R.drawable.ship3x1rotated
-    ),
-)
 
 class Cell() {
     var ships: MutableList<Ships> = mutableListOf()
@@ -127,6 +79,7 @@ class Cell() {
 
     }
 
+
     fun assignShip(theShip: Ships, x: Int, y: Int) {
         theShip.position = Position(x, y)
         this.ships.add(theShip)
@@ -135,8 +88,17 @@ class Cell() {
 
 
     fun reassignColor() {
-        this.currentColor = selectColor()
+        if (gameStarted) {
+            if (this.ships.isEmpty()){
+                currentColor = Color.Red
+            }else{
+                currentColor = Color.Green
+            }
+        }else {
+            this.currentColor = selectColor()
+        }
     }
+
 
 
     fun removeShip() {
@@ -213,14 +175,38 @@ class Cell() {
 data class Grid(
     val dataBase: Database,
     val players: Map<String, player>,
-    val games: Map<String, game>
+    val games: Map<String, game>,
+    val gameId: String
 ) {
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
     var shipLocationLocalPlayer: MutableList<Int> = mutableListOf(0)
     var shipLocationEnemyPlayer: MutableList<Int> = mutableListOf(0)
     var currentGameId: String = ""
-
+    var gameJustStarted = true
+    val battleShips = arrayOf(
+        Ships(
+            "1x1", 1, shipImage = R.drawable.ship1x1copy,
+            shipRotatedImage = R.drawable.ship1x1rotated
+        ),
+        Ships(
+            "1x2", 2, R.drawable.ship2x1copy,
+            shipRotatedImage = R.drawable.ship2x1rotated
+        ),
+        Ships(
+            "1x3", 3, R.drawable.ship3x1copy,
+            shipRotatedImage = R.drawable.ship3x1rotated
+        ),
+        Ships(
+            "1x4", 4, R.drawable.ship4x1copy,
+            shipRotatedImage = R.drawable.ship4x1rotated
+        ),
+        Ships(
+            "1x5", 5, R.drawable.ship3x1copy,
+            shipRotatedImage = R.drawable.ship3x1rotated
+        ),
+    )
+    var isReady = mutableStateOf(players[dataBase.localPlayerId]!!.ready)
 
     @SuppressLint("SuspiciousIndentation")
     @Composable
@@ -254,7 +240,7 @@ data class Grid(
                                     //Calling key to minimize rerendering
 
                                     currentCell.DrawBox(onClick = {
-                                        if (!players[dataBase.localPlayerId.value]!!.ready) {
+                                        if (!isReady.value) {
                                             if (selectedShip.value != null) {
                                                 if (selectedShip.value!!.imageRotation.value > 0) {
                                                     replaceShip(selectedShip.value!!, j, i)
@@ -262,16 +248,22 @@ data class Grid(
                                                     replaceShipRotated(selectedShip.value!!, j, i)
                                                 }
                                                 selectedShip.value = null
-                                            } else if (!currentCell.ships.isEmpty()) {
+                                            } else if (currentCell.ships.isNotEmpty()) {
                                                 selectedShip.value = currentCell.ships.last()
                                             }
                                         } else {
-                                            if (games[currentGameId]?.gameState == dataBase.localPlayerId.value) {
-                                                //gridArray[i][j].reassignColor()
-
+                                            dataBase.db.collection("games")
+                                                .document(gameId)
+                                                .update("playerAttempt", i.toString()+ j.toString())
+                                            if (gridArray[i][j].ships.isNotEmpty()) {
+                                                gridArray[i][j].reassignColor()
                                             } else {
-
+                                                gridArray[i][j].reassignColor()
+                                                dataBase.db.collection("games")
+                                                    .document(gameId)
+                                                    .update("gameState", players[dataBase.localPlayerId]?.enemyPlayer)
                                             }
+
 
                                         }
 
@@ -302,7 +294,7 @@ data class Grid(
                         .padding(top = 50.dp)
                 ) { Text("Rotate") }
             }
-            if (!players[dataBase.localPlayerId.value]!!.ready) {
+            if (!isReady.value) {
                 Button(
                     onClick = {
                         var ready = true
@@ -367,32 +359,33 @@ data class Grid(
     }
 
     fun startingPosition() {
-        for (i in 0 until 5) {
-            gridArray[0][i].assignShip(battleShips[4], 0, i)
-            gridArray[0][i].reassignColor()
+        if (gameJustStarted) {
+            for (i in 0 until 5) {
+                gridArray[0][i].assignShip(battleShips[4], 0, i)
+                gridArray[0][i].reassignColor()
+            }
+            gridArray[0][0].ships.last().startPosition2.value = Position(0, 0)
+            for (i in 6 until 10) {
+                gridArray[0][i].assignShip(battleShips[3], 0, i)
+                gridArray[0][i].reassignColor()
+            }
+            gridArray[0][6].ships.last().startPosition2.value = Position(0, 6)
+            for (i in 0 until 3) {
+                gridArray[1][i].assignShip(battleShips[2], 1, i)
+                gridArray[1][i].reassignColor()
+            }
+            gridArray[1][0].ships.last().startPosition2.value = Position(1, 0)
+            for (i in 4 until 6) {
+                gridArray[1][i].assignShip(battleShips[1], 1, i)
+                gridArray[1][i].reassignColor()
+            }
+            gridArray[1][4].ships.last().startPosition2.value = Position(1, 4)
 
+            gridArray[1][7].assignShip(battleShips[0], 1, 7)
+            gridArray[1][7].ships.last().startPosition2.value = Position(1, 7)
+            gridArray[1][7].reassignColor()
+            gameJustStarted = !gameJustStarted
         }
-        gridArray[0][0].ships.last().startPosition2.value = Position(0, 0)
-        for (i in 6 until 10) {
-            gridArray[0][i].assignShip(battleShips[3], 0, i)
-            gridArray[0][i].reassignColor()
-        }
-        gridArray[0][6].ships.last().startPosition2.value = Position(0, 6)
-        for (i in 0 until 3) {
-            gridArray[1][i].assignShip(battleShips[2], 1, i)
-            gridArray[1][i].reassignColor()
-        }
-        gridArray[1][0].ships.last().startPosition2.value = Position(1, 0)
-        for (i in 4 until 6) {
-            gridArray[1][i].assignShip(battleShips[1], 1, i)
-            gridArray[1][i].reassignColor()
-        }
-        gridArray[1][4].ships.last().startPosition2.value = Position(1, 4)
-
-        gridArray[1][7].assignShip(battleShips[0], 1, 7)
-        gridArray[1][7].ships.last().startPosition2.value = Position(1, 7)
-        gridArray[1][7].reassignColor()
-
 
     }
 
@@ -478,13 +471,13 @@ data class Grid(
 
 
         dataBase.db.collection("players")
-            .document(dataBase.localPlayerId.value!!)
+            .document(dataBase.localPlayerId!!)
             .update("playerShips", shipLocationLocalPlayer)
 
         dataBase.listentoPlayer()
-        if (players[dataBase.localPlayerId.value]?.ready != true) {
+        if (players[dataBase.localPlayerId]?.ready != true) {
             dataBase.db.collection("players")
-                .document(dataBase.localPlayerId.value!!)
+                .document(dataBase.localPlayerId!!)
                 .update("ready", true)
         }
     }
@@ -499,9 +492,8 @@ data class Grid(
         }
     }
 
-    fun getCoordinates() {
-        this.shipLocationEnemyPlayer =
-            players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.playerShips as MutableList<Int>
+    fun getCoordinates(enemyShips: List<Int>?) {
+        this.shipLocationEnemyPlayer = enemyShips as MutableList<Int>
 
 
     }
@@ -518,7 +510,7 @@ data class Grid(
                         if (currentShip % 10 > 0) {
                             for (k in 0 until ((currentShip / 10) % 10)) {
                                 gridArray[i + k][j].assignShip(
-                                    enemyBattleShips[((currentShip / 10) % 10) - 1],
+                                    this.battleShips[((currentShip / 10) % 10) - 1],
                                     x = i + k,
                                     y = j
                                 )
@@ -534,7 +526,7 @@ data class Grid(
                         } else {
                             for (k in 0 until ((currentShip / 10) % 10)) {
                                 gridArray[i][j + k].assignShip(
-                                    enemyBattleShips[((currentShip / 10) % 10) - 1],
+                                    this.battleShips[((currentShip / 10) % 10) - 1],
                                     x = i,
                                     y = j + k
                                 )
@@ -567,6 +559,7 @@ data class Grid(
 
 @Composable
 fun MainGame2(navController: NavController, dataBase: Database, gameId: String?) {
+    Log.d("Callings", "main game2 has been called")
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
 
@@ -593,7 +586,7 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             .background(Color.Black.copy(alpha = 0.5f))
                     ) {
                         games.forEach { (gameId, game) ->
-                            if (game.player1Id == dataBase.localPlayerId.value) {
+                            if (game.player1Id == dataBase.localPlayerId) {
                                 Text(
                                     text = "Name: player1 ${players[games[gameId]!!.player1Id]!!.name} ",
                                     textAlign = TextAlign.Start,
@@ -637,8 +630,22 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        var gameStarted = players[dataBase.localPlayerId.value]?.ready == true &&
-                                players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true
+                        val grid = remember { Grid(dataBase, players, games, gameId) }
+                        val enemyGrid = remember { Grid(dataBase, players, games, gameId) }
+                        if (games[gameId]?.playerAttempt != ""){
+                            val attempt = games[gameId]?.playerAttempt
+                            val i = attempt!![0].toString().toInt()
+                            val j = attempt[1].toString().toInt()
+                            Log.d("recoloring", "i is " + i + " and j is " + j)
+                            if (games[gameId]?.gameState != dataBase.localPlayerId){
+
+                                grid.gridArray[i][j].reassignColor()
+                            }
+
+                        }
+                        gameStarted = players[dataBase.localPlayerId]?.ready == true &&
+                                players[players[dataBase.localPlayerId]?.enemyPlayer]?.ready == true
+
                         if (games[gameId]?.gameState == "player1_turn") {
                             dataBase.db.collection("games")
                                 .document(gameId)
@@ -646,33 +653,33 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         }
 
 
-                        val grid = Grid(dataBase, players, games)
-                        val enemyGrid = Grid(dataBase, players, games)
-                        if (players[dataBase.localPlayerId.value]?.ready == true &&
-                            players[players[dataBase.localPlayerId.value]?.enemyPlayer]?.ready == true
-                        )
-                            gameStarted = true
 
 
-                        grid.currentGameId = gameId
-                        enemyGrid.currentGameId = gameId
-                        //grid.DrawGrid(grid.gridArray)
+
                         if (gameStarted) {
-                            enemyGrid.getCoordinates()
+                            val enemyShips = players[players[dataBase.localPlayerId]?.enemyPlayer]?.playerShips
+                            enemyGrid.getCoordinates(enemyShips)
                             enemyGrid.setEnemyShips()
-                        } else if (players[dataBase.localPlayerId.value]?.ready != true) {
-                            dataBase.stopListening(playerListener)
+                            grid.isReady.value = true
+                            enemyGrid.isReady.value = true
+                        } else if (players[dataBase.localPlayerId]?.ready != true) {
+                            for (ship in grid.battleShips){
+                                Log.d("thegridarray", ship.startPosition2.value.toString())
+                            }
+                            //dataBase.stopListening(playerListener)
                             grid.startingPosition()
                             grid.DrawGrid(grid.gridArray)
-                            grid.DrawShips(battleShips)
+                            grid.DrawShips(grid.battleShips)
                         }
 
 
                         if (gameStarted) {
-                            if (games[gameId]?.gameState == dataBase.localPlayerId.value) {
-                                enemyGrid.DrawGrid(grid.gridArray)
+                            if (games[gameId]?.gameState == dataBase.localPlayerId) {
+                                enemyGrid.DrawGrid(enemyGrid.gridArray)
+                                enemyGrid.DrawShips(enemyGrid.battleShips)
                             } else {
                                 grid.DrawGrid(grid.gridArray)
+                                grid.DrawShips(grid.battleShips)
                             }
 
                         }

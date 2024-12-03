@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 var itExists = false
 @Composable
 fun secondScreen (navController: NavController, dataBase: Database, isProcessing: IsProcessing) {
+    Log.d("Callings", "Second Screen has been called")
     //The offline information from storage with an ID of "BattleShipPrefs"
     val sharedPreferences = LocalContext.current.getSharedPreferences("BattleShipPrefs", Context.MODE_PRIVATE)
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
@@ -48,16 +49,16 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
     // Check for playerId in SharedPreferences
     LaunchedEffect(Unit) {
         //Retrieves the name from the shared preferences
-        dataBase.localPlayerId.value = sharedPreferences.getString("playerId", null)
+        dataBase.localPlayerId = sharedPreferences.getString("playerId", null)
 
 
-        if (dataBase.localPlayerId.value != null) {
+        if (dataBase.localPlayerId != null) {
             navController.navigate("lobby")
         }
 
 
     }
-    if (dataBase.localPlayerId.value == null) {
+    if (dataBase.localPlayerId == null) {
         var name by remember{ mutableStateOf("") }
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -110,7 +111,7 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
                                         sharedPreferences.edit().putString("playerId", playerId).apply()
                                         sharedPreferences.edit().putString("playerName", name).apply()
 
-                                        dataBase.localPlayerId.value = playerId
+                                        dataBase.localPlayerId = playerId
 
                                         navController.navigate(nav.lobby)
                                         isProcessing.isProcessing2.value = false
@@ -143,7 +144,7 @@ fun secondScreen (navController: NavController, dataBase: Database, isProcessing
                 .addOnSuccessListener { documentRef ->
                     val playerId = documentRef.id
                     sharedPreferences.edit().putString("playerId", playerId).apply()
-                    dataBase.localPlayerId.value = playerId
+                    dataBase.localPlayerId = playerId
                 }
             Log.d ("test", "Player " + newPlayer + " is created")
             itExists = true
