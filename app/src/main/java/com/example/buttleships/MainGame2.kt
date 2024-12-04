@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -638,74 +640,138 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        val grid = remember {Grid(dataBase, players, games, gameId) }
-                        val enemyGrid = remember { Grid(dataBase, players, games, gameId) }
-                        grid.playerTurn = (games[gameId]?.gameState ?: "")
-                        enemyGrid.playerTurn = (games[gameId]?.gameState ?: "")
-                        if (games[gameId]?.playerAttempt != ""){
-                            val attempt = games[gameId]?.playerAttempt
-                            val i = attempt!![0].toString().toInt()
-                            val j = attempt[1].toString().toInt()
-                            val result = attempt.substring(2)
-                            Log.d("recoloring", "i is " + i + " and j is " + j)
-                            if (result == dataBase.localPlayerId){
-                                enemyGrid.gridArray[i][j].reassignColor()
-                                if (enemyGrid.gridArray[i][j].ships.isNotEmpty()) {
-                                    enemyGrid.gridArray[i][j].ships.last().hitCount += 1
-                                    if (enemyGrid.gridArray[i][j].ships.last().hitCount > enemyGrid.gridArray[i][j].ships.last().shipLength)
-                                        enemyGrid.gridArray[i][j].ships.last().hitCount =
-                                            enemyGrid.gridArray[i][j].ships.last().shipLength
-                                }
-                            }else{
-                                grid.gridArray[i][j].reassignColor()
-                            }
-                        }
-                        gameStarted = players[dataBase.localPlayerId]?.ready == true &&
-                                players[players[dataBase.localPlayerId]?.enemyPlayer]?.ready == true
+                        val gameOver = games[gameId]?.gameState?.substring(0,8)
+                        if (gameOver == "GameOver") {
+                            val name = games[gameId]?.gameState?.substring(8)
 
-                        if (games[gameId]?.gameState == "player1_turn") {
-                            dataBase.db.collection("games")
-                                .document(gameId)
-                                .update("gameState", games[gameId]?.player1Id)
-                        }
+                            AlertDialog(
 
+                                title = {
+                                    Text(text = "GAME OVER!!!")
+                                },
+                                text = {
+                                    Text(text = "Player " + players[name]?.name + " won!!!")
+                                },
+                                onDismissRequest = {
 
-
-
-
-                        if (gameStarted) {
-                            val enemyShips = players[players[dataBase.localPlayerId]?.enemyPlayer]?.playerShips
-                            enemyGrid.getCoordinates(enemyShips)
-                            enemyGrid.setEnemyShips()
-                            grid.isReady.value = true
-                            enemyGrid.isReady.value = true
-                        } else if (players[dataBase.localPlayerId]?.ready != true) {
-                            for (ship in grid.battleShips){
-                                Log.d("thegridarray", ship.startPosition2.value.toString())
-                            }
-                            //dataBase.stopListening(playerListener)
-                            grid.startingPosition()
-                            grid.DrawGrid(grid.gridArray)
-                            grid.DrawShips(grid.battleShips)
-                        }
-
-
-                        if (gameStarted) {
-                            if (games[gameId]?.gameState == dataBase.localPlayerId) {
-                                enemyGrid.DrawGrid(enemyGrid.gridArray)
-                                for (ship in enemyGrid.battleShips){
-                                    if (ship.hitCount == ship.shipLength){
-                                        enemyGrid.gridArray [ship.startPosition2.value.row][ship.startPosition2.value.column].DrawImage(ship)
+                                },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            navController.navigate(nav.lobby)
+                                        }
+                                    ) {
+                                        Text("Confirm")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(
+                                        onClick = {
+                                            navController.navigate(nav.lobby)
+                                        }
+                                    ) {
+                                        Text("Dismiss")
                                     }
                                 }
-                            } else {
+                            )
+                        } else
+                        {
+                            val grid = remember { Grid(dataBase, players, games, gameId) }
+                            val enemyGrid = remember { Grid(dataBase, players, games, gameId) }
+                            grid.playerTurn = (games[gameId]?.gameState ?: "")
+                            enemyGrid.playerTurn = (games[gameId]?.gameState ?: "")
+                            if (games[gameId]?.playerAttempt != "") {
+                                val attempt = games[gameId]?.playerAttempt
+                                val i = attempt!![0].toString().toInt()
+                                val j = attempt[1].toString().toInt()
+                                val result = attempt.substring(2)
+                                Log.d("recoloring", "i is " + i + " and j is " + j)
+                                if (result == dataBase.localPlayerId) {
+                                    enemyGrid.gridArray[i][j].reassignColor()
+                                    if (enemyGrid.gridArray[i][j].ships.isNotEmpty()) {
+                                        enemyGrid.gridArray[i][j].ships.last().hitCount += 1
+                                        if (enemyGrid.gridArray[i][j].ships.last().hitCount > enemyGrid.gridArray[i][j].ships.last().shipLength)
+                                            enemyGrid.gridArray[i][j].ships.last().hitCount =
+                                                enemyGrid.gridArray[i][j].ships.last().shipLength
+
+                                    }
+                                    var counter = 0
+                                    for (ship in enemyGrid.battleShips) {
+                                        if (ship.hitCount ==
+                                            ship.shipLength
+                                        ) {
+                                            counter += 1
+                                            if (counter == 5) {
+                                                dataBase.db.collection("games")
+                                                    .document(gameId)
+                                                    .update("gameState", "GameOver"+ dataBase.localPlayerId)
+                                            }
+                                        }
+                                    }
+                                    /*
+                                    if (counter == 15) {
+                                        dataBase.db.collection("games")
+                                            .document(gameId)
+                                            .update("gameState", "GameOver"+ dataBase.localPlayerId)
+                                    }
+
+                                     */
+
+                                } else {
+                                    grid.gridArray[i][j].reassignColor()
+                                }
+                            }
+
+                            gameStarted = players[dataBase.localPlayerId]?.ready == true &&
+                                    players[players[dataBase.localPlayerId]?.enemyPlayer]?.ready == true
+
+                            if (games[gameId]?.gameState == "player1_turn") {
+                                dataBase.db.collection("games")
+                                    .document(gameId)
+                                    .update("gameState", games[gameId]?.player1Id)
+                            }
+
+
+
+
+
+                            if (gameStarted) {
+                                val enemyShips =
+                                    players[players[dataBase.localPlayerId]?.enemyPlayer]?.playerShips
+                                enemyGrid.getCoordinates(enemyShips)
+                                enemyGrid.setEnemyShips()
+                                grid.isReady.value = true
+                                enemyGrid.isReady.value = true
+                            } else if (players[dataBase.localPlayerId]?.ready != true) {
+                                for (ship in grid.battleShips) {
+                                    Log.d("thegridarray", ship.startPosition2.value.toString())
+                                }
+                                //dataBase.stopListening(playerListener)
+                                grid.startingPosition()
                                 grid.DrawGrid(grid.gridArray)
                                 grid.DrawShips(grid.battleShips)
                             }
 
+
+                            if (gameStarted) {
+                                if (games[gameId]?.gameState == dataBase.localPlayerId) {
+                                    enemyGrid.DrawGrid(enemyGrid.gridArray)
+                                    for (ship in enemyGrid.battleShips) {
+                                        if (ship.hitCount == ship.shipLength) {
+                                            enemyGrid.gridArray[ship.startPosition2.value.row][ship.startPosition2.value.column].DrawImage(
+                                                ship
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    grid.DrawGrid(grid.gridArray)
+                                    grid.DrawShips(grid.battleShips)
+                                }
+
+                            }
+
+
                         }
-
-
                     }
                 }
             }
