@@ -50,7 +50,7 @@ fun lobby(navController: NavController, dataBase: Database) {
     LaunchedEffect(games) {
         games.forEach { (gameId, game) ->
             if ((game.player1Id == dataBase.localPlayerId
-                        || game.player2Id == dataBase.localPlayerId) && game.gameState == "player1_turn"
+                        || game.player2Id == dataBase.localPlayerId) && game.gameState == "gameStarted"
             ) {
                 navController.navigate("mainGame/${gameId}")
             }
@@ -107,6 +107,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                         verticalArrangement = Arrangement.spacedBy(6.dp) // for spacing between items
                     ) {
                         items(players.entries.toList()) { (documentId, player) ->
+                            var hasGame = false
                             Log.d("test","The document id is " + documentId + " The local player id is: " + dataBase.localPlayerId )
                             if (documentId != dataBase.localPlayerId) {
                                 Row(
@@ -129,10 +130,10 @@ fun lobby(navController: NavController, dataBase: Database) {
                                         modifier = Modifier.weight(1f)
 
                                     )
-                                    var hasGame = false
+
                                     games.forEach { (gameId, game) ->
                                         if (game.player1Id == dataBase.localPlayerId
-                                            && game.gameState == "Invite"
+                                            && game.player2Id == documentId
                                         ) {
                                             Text(
                                                 "Invitation sent",
@@ -142,7 +143,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                             )
                                             hasGame = true
                                         } else if (game.player2Id == dataBase.localPlayerId
-                                            && game.gameState == "Invite"
+                                            && game.player1Id == documentId
                                         ) {
                                             TextButton(
                                                 onClick = {
@@ -154,7 +155,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                         }
                                                     dataBase.db.collection("games")
                                                         .document(gameId)
-                                                        .update("gameState", "player1_turn")
+                                                        .update("gameState", "gameStarted")
                                                         .addOnSuccessListener {
                                                             navController.navigate("mainGame/${gameId}")
                                                         }
@@ -178,7 +179,7 @@ fun lobby(navController: NavController, dataBase: Database) {
                                                 dataBase.db.collection("games")
                                                     .add(
                                                         game(
-                                                            gameState = "Invite",
+                                                            gameState = "waitingForOtherPlayer",
                                                             player1Id = dataBase.localPlayerId!!,
                                                             player2Id = documentId
                                                         )
