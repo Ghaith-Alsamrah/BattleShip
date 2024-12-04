@@ -99,8 +99,6 @@ class Cell() {
         }
     }
 
-
-
     fun removeShip() {
         this.ships.remove(this.ships.last())
         reassignColor()
@@ -120,7 +118,7 @@ class Cell() {
         }
     }
 
-    //new it company name
+
     @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawImage(ship: Ships?) {
@@ -176,8 +174,10 @@ data class Grid(
     val dataBase: Database,
     val players: Map<String, player>,
     val games: Map<String, game>,
-    val gameId: String
-) {
+    val gameId: String,
+
+)
+{
     val gridArray: Array<Array<Cell>> = Array(10) { Array(10) { Cell() } }
     var selectedShip: MutableState<Ships?> = mutableStateOf(null)
     var shipLocationLocalPlayer: MutableList<Int> = mutableListOf(0)
@@ -207,7 +207,7 @@ data class Grid(
         ),
     )
     var isReady = mutableStateOf(players[dataBase.localPlayerId]!!.ready)
-
+    var playerTurn: String= games[gameId]?.gameState.toString()
     @SuppressLint("SuspiciousIndentation")
     @Composable
     fun DrawGrid(gridArray: Array<Array<Cell>>) {
@@ -252,16 +252,24 @@ data class Grid(
                                                 selectedShip.value = currentCell.ships.last()
                                             }
                                         } else {
-                                            dataBase.db.collection("games")
-                                                .document(gameId)
-                                                .update("playerAttempt", i.toString()+ j.toString())
-                                            if (gridArray[i][j].ships.isNotEmpty()) {
-                                                gridArray[i][j].reassignColor()
-                                            } else {
-                                                gridArray[i][j].reassignColor()
+                                            if (playerTurn == dataBase.localPlayerId) {
                                                 dataBase.db.collection("games")
                                                     .document(gameId)
-                                                    .update("gameState", players[dataBase.localPlayerId]?.enemyPlayer)
+                                                    .update(
+                                                        "playerAttempt",
+                                                        i.toString() + j.toString()+playerTurn
+                                                    )
+                                                if (gridArray[i][j].ships.isNotEmpty()) {
+                                                    //gridArray[i][j].reassignColor()
+                                                } else {
+                                                    //gridArray[i][j].reassignColor()
+                                                    dataBase.db.collection("games")
+                                                        .document(gameId)
+                                                        .update(
+                                                            "gameState",
+                                                            players[dataBase.localPlayerId]?.enemyPlayer
+                                                        )
+                                                }
                                             }
 
 
@@ -563,6 +571,7 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()
 
+
     if (gameId != null && games.containsKey(gameId)) {
 
         Scaffold { innerPadding ->
@@ -630,18 +639,21 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        val grid = remember { Grid(dataBase, players, games, gameId) }
+                        val grid = remember {Grid(dataBase, players, games, gameId) }
                         val enemyGrid = remember { Grid(dataBase, players, games, gameId) }
+                        grid.playerTurn = (games[gameId]?.gameState ?: "")
+                        enemyGrid.playerTurn = (games[gameId]?.gameState ?: "")
                         if (games[gameId]?.playerAttempt != ""){
                             val attempt = games[gameId]?.playerAttempt
                             val i = attempt!![0].toString().toInt()
                             val j = attempt[1].toString().toInt()
+                            val result = attempt.substring(2)
                             Log.d("recoloring", "i is " + i + " and j is " + j)
-                            if (games[gameId]?.gameState != dataBase.localPlayerId){
-
+                            if (result == dataBase.localPlayerId){
+                                enemyGrid.gridArray[i][j].reassignColor()
+                            }else{
                                 grid.gridArray[i][j].reassignColor()
                             }
-
                         }
                         gameStarted = players[dataBase.localPlayerId]?.ready == true &&
                                 players[players[dataBase.localPlayerId]?.enemyPlayer]?.ready == true
@@ -676,7 +688,7 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         if (gameStarted) {
                             if (games[gameId]?.gameState == dataBase.localPlayerId) {
                                 enemyGrid.DrawGrid(enemyGrid.gridArray)
-                                enemyGrid.DrawShips(enemyGrid.battleShips)
+                                //enemyGrid.DrawShips(enemyGrid.battleShips)
                             } else {
                                 grid.DrawGrid(grid.gridArray)
                                 grid.DrawShips(grid.battleShips)
@@ -684,8 +696,6 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
 
                         }
 
-
-                        //grid.DrawShips()
 
                     }
                 }
