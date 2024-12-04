@@ -46,10 +46,9 @@ data class Position(val row: Int, val column: Int)
 class Ships(name: String, length: Int, shipImage: Int, shipRotatedImage: Int) {
     val shipName: String = name
     val shipLength: Int = length
-    var isRotated: Boolean = false
-    var isSelected: Boolean = false
     var position: Position = Position(0, 0)
     var startPosition2: MutableState<Position> = (mutableStateOf(Position(0, 0)))
+    var hitCount : Int = 0
 
     //var startPosition: Position = Position(0,0)
     val image: Int = shipImage
@@ -651,6 +650,12 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                             Log.d("recoloring", "i is " + i + " and j is " + j)
                             if (result == dataBase.localPlayerId){
                                 enemyGrid.gridArray[i][j].reassignColor()
+                                if (enemyGrid.gridArray[i][j].ships.isNotEmpty()) {
+                                    enemyGrid.gridArray[i][j].ships.last().hitCount += 1
+                                    if (enemyGrid.gridArray[i][j].ships.last().hitCount > enemyGrid.gridArray[i][j].ships.last().shipLength)
+                                        enemyGrid.gridArray[i][j].ships.last().hitCount =
+                                            enemyGrid.gridArray[i][j].ships.last().shipLength
+                                }
                             }else{
                                 grid.gridArray[i][j].reassignColor()
                             }
@@ -688,7 +693,11 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                         if (gameStarted) {
                             if (games[gameId]?.gameState == dataBase.localPlayerId) {
                                 enemyGrid.DrawGrid(enemyGrid.gridArray)
-                                //enemyGrid.DrawShips(enemyGrid.battleShips)
+                                for (ship in enemyGrid.battleShips){
+                                    if (ship.hitCount == ship.shipLength){
+                                        enemyGrid.gridArray [ship.startPosition2.value.row][ship.startPosition2.value.column].DrawImage(ship)
+                                    }
+                                }
                             } else {
                                 grid.DrawGrid(grid.gridArray)
                                 grid.DrawShips(grid.battleShips)
