@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun lobby(navController: NavController, dataBase: Database) {
+    dataBase.listentoGame()
     Log.d("Callings", "Lobby has been called")
     val players by dataBase.playerList.asStateFlow().collectAsStateWithLifecycle()
     val games by dataBase.gameMap.asStateFlow().collectAsStateWithLifecycle()

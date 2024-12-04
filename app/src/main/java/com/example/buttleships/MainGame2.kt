@@ -642,6 +642,7 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                     ) {
                         val gameOver = games[gameId]?.gameState?.substring(0,8)
                         if (gameOver == "GameOver") {
+                            dataBase.stopListening(gameListener)
                             val name = games[gameId]?.gameState?.substring(8)
 
                             AlertDialog(
@@ -658,10 +659,23 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
+
+                                            dataBase.db.collection("players")
+                                                .document(dataBase.localPlayerId.toString())
+                                                .update("ready", false)
+
+                                            dataBase.db.collection("players")
+                                                .document(players[dataBase.localPlayerId]?.enemyPlayer.toString())
+                                                .update("ready", false)
+                                            dataBase.db.collection("games")
+                                                .document(gameId)
+                                                .delete()
+
                                             navController.navigate(nav.lobby)
+
                                         }
                                     ) {
-                                        Text("Confirm")
+                                        Text("Back to Lobby")
                                     }
                                 },
                                 dismissButton = {
@@ -708,14 +722,6 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
                                             }
                                         }
                                     }
-                                    /*
-                                    if (counter == 15) {
-                                        dataBase.db.collection("games")
-                                            .document(gameId)
-                                            .update("gameState", "GameOver"+ dataBase.localPlayerId)
-                                    }
-
-                                     */
 
                                 } else {
                                     grid.gridArray[i][j].reassignColor()
@@ -777,4 +783,5 @@ fun MainGame2(navController: NavController, dataBase: Database, gameId: String?)
             }
         }
     }
+
 }
